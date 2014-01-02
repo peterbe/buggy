@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en" ng-app="buggyApp">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buggy</title>
+
+<link rel="stylesheet" href="static/css/pure-min.css">
+<link rel="stylesheet" href="static/css/email.css">
+<link rel="stylesheet" href="static/css/extra.css">
+
+<!---<script src="http://use.typekit.net/gis6vng.js"></script>
+<script>
+    try { Typekit.load(); } catch (e) {}
+</script>-->
+
+</head>
+<body>
+
+
+
+
+
+
+<div class="pure-g-r content" id="layout" ng-controller="BugsController">
+    <div class="pure-u" id="nav">
+        <a href="#" class="nav-menu-button">Menu</a>
+
+        <div class="nav-inner">
+            <button class="pure-button primary-button">Compose</button>
+
+            <div class="pure-menu pure-menu-open">
+                <ul>
+                    <li><a href="#">Inbox <span class="email-count">(2)</span></a></li>
+                    <li><a href="#">Important</a></li>
+                    <li><a href="#">Sent</a></li>
+                    <li><a href="#">Drafts</a></li>
+                    <li><a href="#">Trash</a></li>
+                    <li class="pure-menu-heading">Labels</li>
+                    <li><a href="#"><span class="email-label-personal"></span>Personal</a></li>
+                    <li><a href="#"><span class="email-label-work"></span>Work</a></li>
+                    <li><a href="#"><span class="email-label-travel"></span>Travel</a></li>
+                    <li class="pure-menu-heading">Options</li>
+                    <li><a href="#/config" ng-click="toggleConfig()">Config</a></li>
+
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="pure-u-1" id="list">
+        <!-- consider `email-item-selected` -->
+        <!-- consider `email-item-unread` -->
+        <div class="email-item pure-g" ng-repeat="bug in bugs track by $index | orderBy:last_change_time "
+             ng-class="{'email-item-unread': bug.unread}" ng-click="selectBug(bug)">
+            <div class="pure-u">
+                <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.email) }}">
+                <br><br>
+                <abbr class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</abbr>
+            </div>
+
+            <div class="pure-u-3-4">
+                <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
+                <h4 class="email-subject">{{ bug.summary }}</h4>
+                <p class="email-desc">
+                    {{ bug.extract }}
+                    <br>
+                    {{ bug.last_change_time }}
+                </p>
+                <p>
+                  <span class="badge badge-small badge-green" ng-if="bug.status">{{ bug.status }}</span>
+                  <span class="badge badge-small badge-blue" ng-if="bug.resolution">{{ bug.resolution }}</span>
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="pure-u-1" id="main">
+
+        <div ng-if="in_config">
+            <div class="email-content-header pure-g">
+                <div class="pure-u-2-3">
+                    <h1 class="email-content-title">Configuration Options</h1>
+                </div>
+                <div class="pure-u-1-3">
+                    <p style="text-align: right"><a href="#" ng-click="toggleConfig()">Close</a></p>
+                </div>
+            </div>
+
+            <div class="email-content-body">
+              <h2>In Memory</h2>
+              <dl>
+                <dt># Bugs in scope</dt>
+                <dd>{{ bugs.length }}</dd>
+              </dl>
+            </div>
+
+            <div class="email-content-body">
+              <h2>Debug Tools</h2>
+              <form ng-submit="clearLocalStorage()">
+                <button class="pure-button pure-button-primary">Clear Local Storage</button>
+              </form>
+            </div>
+
+        </div>
+
+        <div class="email-content" ng-if="bug.empty && !in_config">
+            <div class="email-content-header pure-g">
+                <div class="pure-u-1-2">
+                    <h1 class="email-content-title">Nothing selected</h1>
+                </div>
+            </div>
+
+            <div class="email-content-body">
+             Select a bug in the left-hand column
+            </div>
+        </div><!-- /empty -->
+
+        <div class="email-content" ng-if="!bug.empty && !in_config">
+            <div class="email-content-header pure-g">
+                <div class="pure-u-2-3">
+                    <h2 class="email-content-title">{{ bug.summary }}</h2>
+                    <p class="external-url">
+                      <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}"
+                         target="_blank">
+                        https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}
+                      </a>
+                    </p>
+                    <p class="email-content-subtitle">
+                        From <a>Tilo Mitra</a> at <span>3:56pm, April 3, 2012</span>
+                    </p>
+                </div>
+
+                <div class="pure-u-1-3 email-content-controls">
+                    <span class="badge badge-green" ng-if="bug.status">{{ bug.status }}</span>
+                    <span class="badge badge-blue" ng-if="bug.resolution">{{ bug.resolution }}</span>
+
+                    <!--<button class="pure-button secondary-button">Reply</button>
+                    <button class="pure-button secondary-button">Forward</button>
+                    <button class="pure-button secondary-button">Move to</button>-->
+                </div>
+            </div>
+
+
+            <div class="email-content-body" ng-repeat="comment in bug.comments">
+               <div class="pure-u" ng-if="isEmail(comment.creator.name)">
+                        <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(comment.creator.name) }}"
+                             >
+
+               </div>
+               <div class="pure-u-3-4">
+               <p class="email-content-subtitle">
+                        From <b>{{ comment.creator.name }}</b> at <span>{{ comment.creation_time }}</span>
+                        <br>
+                        <span>{{ displayTimeAgo(comment.creation_time) }}</span>
+               </p>
+               </div>
+             <pre ng-bind-html="comment.text | linky:'_blank'"></pre>
+
+            </div>
+
+        </div><!-- /!empty -->
+    </div>
+</div>
+
+
+<script src="static/js/vendor/angular.min.js"></script>
+<script src="static/js/vendor/angular-sanitize.min.js"></script>
+<script src="static/js/vendor/localForage.js"></script>
+<script async src="static/js/vendor/underscore-min.js"></script>
+<script async src="static/js/vendor/moment.min.js"></script>
+<script src="static/js/utils.js"></script>
+<script src="static/js/buggy.js"></script>
+
+</body>
+</html>

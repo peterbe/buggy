@@ -1,0 +1,32 @@
+.badge {
+    margin: 0px 0.1em;
+    padding: 0.3em 0.5em;
+    color: #FFF;
+    border-radius: 3px;
+    background: none repeat scroll 0% 0% #999;
+    font-size: 80%;
+}
+.badge-green {
+    background: none repeat scroll 0% 0% #5ABA59;
+}
+.badge-blue {
+    background: none repeat scroll 0% 0% #4D85D1;
+}
+.badge-red {
+    background: none repeat scroll 0% 0% #DF2D4F;
+}
+.badge-purple {
+    background: none repeat scroll 0% 0% #8156A7;
+}
+.badge-small {
+    font-size: 60%
+}
+
+.email-content-body {
+    border-bottom: 1px solid #DDD;
+}
+
+.email-content-body pre {
+    font-family: sans-serif;
+    font-size: 0.9em;
+}
