@@ -1,0 +1,21 @@
+TODO
+====
+
+* First fetch by bugs you're CC'ed on or assigned to
+
+* Fix orderBy
+
+* Header on list to refresh
+
+* Combine history with comments
+
+
+DONE
+====
+
+* Loading indicators
+
+* Replace "From Tilo Mitra at 3:56pm, April 3, 2012" line on selected
+  bug
+
+* Permlink all dates on comments

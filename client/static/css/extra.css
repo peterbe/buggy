@@ -30,3 +30,75 @@
     font-family: sans-serif;
     font-size: 0.9em;
 }
+
+.email-content-subtitle {
+    font-size: 0.9em;
+}
+
+.loading, .errornotice {
+    position: fixed;
+    opacity: 0.8;
+    top: 0;
+    right: 0;
+}
+.loading {
+    z-index: 2;
+    background-color: #fff;
+    border-left: 1px solid #999;
+    border-bottom: 1px solid #999;
+    border-bottom-left-radius: 6px;
+    background-image: url(../images/ajax-loader.gif);
+    background-repeat: no-repeat;
+    background-position: 1% 75%;
+}
+.loading p {
+    margin: 3px 23px;
+    margin-left: 45px;
+}
+.errornotice {
+    z-index: 3;
+    background-color: #fff;
+    color: red;
+    border-left: 1px solid #999;
+    border-bottom: 1px solid #999;
+    border-bottom-left-radius: 6px;
+}
+.errornotice p {
+    margin: 3px 23px;
+    font-weight: bold;
+}
+
+.blinking {
+    -webkit-animation-name: blinker;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-iteration-count: infinite;
+
+    -moz-animation-name: blinker;
+    -moz-animation-duration: 1s;
+    -moz-animation-timing-function: linear;
+    -moz-animation-iteration-count: infinite;
+
+    animation-name: blinker;
+    animation-duration: 1s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@-moz-keyframes blinker {
+    0% { opacity: 1.0; }
+    50% { opacity: 0.0; }
+    100% { opacity: 1.0; }
+}
+
+@-webkit-keyframes blinker {
+    0% { opacity: 1.0; }
+    50% { opacity: 0.0; }
+    100% { opacity: 1.0; }
+}
+
+@keyframes blinker {
+    0% { opacity: 1.0; }
+    50% { opacity: 0.0; }
+    100% { opacity: 1.0; }
+}

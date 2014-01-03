@@ -50,6 +50,7 @@ var SAMPLE_BUGS = [
                  }
                  ];
 
+var _INCLUDE_FIELDS = 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary';
 // utils stuff
 function makeCommentExtract(comment, max_length) {
   max_length = max_length || 75;
@@ -67,6 +68,16 @@ function BugsController($scope, $http) {
 
   $scope.bugs = [];
   $scope.in_config = false;
+
+  $scope.loaders = {
+     fetching_bugs: false,
+     fetching_comments: false,
+     refreshing_bug: false
+  };
+
+  $scope.errors = {
+     update_comments: false
+  };
 
   $scope.toggleConfig = function() {
     $scope.in_config = ! $scope.in_config;
@@ -89,7 +100,7 @@ function BugsController($scope, $http) {
       product: 'Webtools',
       //component: 'Middleware',
       component: 'Air Mozilla',
-      include_fields: 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary'
+      include_fields: _INCLUDE_FIELDS
     }).success(function(data, status, headers, config) {
       console.log('Success');
       //console.dir(data);
@@ -97,19 +108,42 @@ function BugsController($scope, $http) {
       var bug_ids = [];
       //_.each(_.sortBy(data.bugs, lastChangeTimeSorter), function(bug, index) {
       _.each(data.bugs, function(bug, index) {
-        //console.log(bug.last_change_time);
         // update the local storage
-        asyncStorage.setItem(bug.id, bug);
+        localForage.setItem(bug.id, bug);
         // keep a list of all IDs we use
         bug_ids.push(bug.id);
         // update the scope immediately
         //$scope.bugs.unshift(bug);
         $scope.bugs.push(bug);
       });
-      asyncStorage.setItem('bugs', bug_ids);
+      localForage.setItem('bugs', bug_ids);
       if (callback) callback();
     }).error(function(data, status, headers, config) {
       console.log('Failure');
+      console.dir(data);
+    });
+  }
+
+  function fetchAndUpdateBug(bug, callback) {
+    fetchBugs({
+      id: bug.id,
+      include_fields: _INCLUDE_FIELDS
+    }).success(function(data, status, headers, config) {
+      console.log('Success');
+      //console.dir(data);
+      if (data.bugs.length) {
+        var bug = data.bugs[0];
+        _.each($scope.bugs, function(old_bug, index) {
+          if (old_bug.id === bug.id) {
+            $scope.bugs[index] = bug;
+          }
+        });
+        // update the local storage too
+        localForage.setItem(bug.id, bug);
+      }
+      if (callback) callback();
+    }).error(function(data, status, headers, config) {
+      console.log('Failure to update bug');
       console.dir(data);
     });
   }
@@ -123,6 +157,7 @@ function BugsController($scope, $http) {
   }
 
   function fetchAndUpdateComments(bug, callback) {
+    console.log('About to update comments');
     fetchComments(bug.id)
       .success(function(data, status, headers, config) {
         console.log('Comments Success');
@@ -131,24 +166,35 @@ function BugsController($scope, $http) {
         if (bug.comments.length) {
           bug.extract = makeCommentExtract(_.last(bug.comments));
         }
-        asyncStorage.setItem(bug.id, bug);
+        localForage.setItem(bug.id, bug);
         if (callback) callback();
       }).error(function(data, status, headers, config) {
-        console.log('Failure');
+        console.warn("Failure to update bugs' comments");
+        if (status === 0) {
+          // timed out, possibly no internet connection
+        } else {
+          $scope.errors.update_comments = true;
+        }
         console.dir(data);
+        console.log('STATUS', status);
+        console.log('HEADERS');
+        console.dir(headers);
+        console.log('CONFIG');
+        console.dir(config);
+        if (callback) callback();
       });
   }
 
   /* Pulls bugs from local storage and if nothing's there,
    * fetch it remotely */
-  function loadBugs() {
-    asyncStorage.getItem('bugs', function(value) {
+  function loadBugs(callback) {
+    localForage.getItem('bugs', function(value) {
       //console.log('VALUE');
       //console.dir(value);
       if (value != null) {
         var _count_to_pull = value.length;
         _.each(value, function(id, index) {
-          asyncStorage.getItem(id, function(bug) {
+          localForage.getItem(id, function(bug) {
             // count down
             _count_to_pull--;
             if (bug != null) {
@@ -161,20 +207,40 @@ function BugsController($scope, $http) {
               $scope.$apply();
               // start pulling down comments pre-emptively
               downloadSomeComments();
+              if (callback) callback();
             }
           });
         });
       } else {
         // need to fetch remotely
+        $scope.loaders.fetching_bugs = true;
         fetchAndUpdateBugs(function() {
+          $scope.loaders.fetching_bugs = false;
           // start pulling down comments pre-emptively
           downloadSomeComments();
+          if (callback) callback();
         });
       }
     });
   }
   // the very first thing to do
-  loadBugs();
+  loadBugs(function() {
+    console.log('Bugs loaded');
+    localForage.getItem('selected_bug', function(id) {
+      if (id) {
+        localForage.getItem(id, function(bug) {
+          if (bug) {
+            console.log('selected bug:', bug.id);
+            $scope.bug = bug;
+            $scope.$apply();
+          } else {
+            console.warn('selected_bug not available');
+          }
+        });
+      }
+    });
+  });
+
 
 
   /* Pulls down the comments for some bugs we haven't already
@@ -185,33 +251,40 @@ function BugsController($scope, $http) {
   var _downloaded_comments = 0;
   function downloadSomeComments() {
     console.log('Hmm... what to download?', _downloaded_comments);
-    if (_downloaded_comments > 15) return;  // we've pre-emptively downloaded too much
+    if (_downloaded_comments > 10) {
+      $scope.loaders.fetching_comments = false;
+      return;  // we've pre-emptively downloaded too much
+    }
+
     var _downloading = false;
     // we want to do this to the most recent bugs first
     _.each(_.sortBy($scope.bugs, lastChangeTimeSorter).reverse(), function(bug, index) {
-      //console.log(index, bug.id, bug.summary, bug.last_change_time, bug.comments == null);
       if (!_downloading && bug.comments == null) {
         _downloading = true;
         _downloaded_comments++;
         console.log("FETCH", bug.id);
+        $scope.loaders.fetching_comments = true;
         fetchAndUpdateComments(bug, downloadSomeComments);
       }
     });
-      //console.log(bug.last_change_time, bug.id, bug.comments == null);
+    if (!_downloading) {
+      // there was nothing more to pre-emptively download
+      $scope.loaders.fetching_comments = false;
+    }
   }
 
+  // the selected bug
   $scope.bug = {
      empty: true
   };
 
-
   $scope.selectBug = function(bug) {
     $scope.in_config = false; // in case
-    //console.log('selected');
-    //console.dir(bug);
     bug.empty = false;
     bug.unread = false;
+    localForage.setItem('selected_bug', bug.id);
     fetchAndUpdateComments(bug);
+    console.dir(bug);
     $scope.bug = bug;
   };
 
@@ -231,7 +304,7 @@ function BugsController($scope, $http) {
   };
 
   $scope.clearLocalStorage = function() {
-    asyncStorage.clear(function() {
+    localForage.clear(function() {
       loadBugs();
     });
   };
@@ -242,6 +315,16 @@ function BugsController($scope, $http) {
 
   $scope.countAdditionalComments = function(bug) {
     return bug.comments.length - 1;
+  };
+
+  $scope.refreshBug = function(bug) {
+    $scope.loaders.refreshing_bug = true;
+    fetchAndUpdateBug(bug, function() {
+      fetchAndUpdateComments(bug, function() {
+        $scope.bug = bug;
+        $scope.loaders.refreshing_bug = false;
+      });
+    });
   };
 
 }
