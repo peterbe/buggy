@@ -8,7 +8,7 @@ a {
 
 /* LAYOUT CSS */
 #layout {
-    padding-left:500px; /* "left col (nav + list)" width */
+    padding-left:600px; /* "left col (nav + list)" width */
     position: relative;
 }
 
@@ -19,7 +19,7 @@ a {
     overflow: auto;
 }
 #nav {
-    margin-left:-500px; /* "left col (nav + list)" width */
+    margin-left:-600px; /* "left col (nav + list)" width */
     width:150px;
     background: rgb(37, 42, 58);
     text-align: center;
@@ -27,8 +27,8 @@ a {
 }
 
 #list {
-    margin-left: -350px;
-    width:350px;
+    margin-left: -450px;
+    width:450px;
     border-right: 1px solid #ddd;
 }
 

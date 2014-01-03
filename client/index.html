@@ -52,23 +52,23 @@
     <div class="pure-u-1" id="list">
         <!-- consider `email-item-selected` -->
         <!-- consider `email-item-unread` -->
-        <div class="email-item pure-g" ng-repeat="bug in bugs track by $index | orderBy:last_change_time "
+        <div class="email-item pure-g" ng-repeat="bug in bugs | orderBy:'last_change_time':true track by bug.id"
              ng-class="{'email-item-unread': bug.unread}" ng-click="selectBug(bug)">
             <div class="pure-u">
                 <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.email) }}">
                 <br><br>
-                <abbr class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</abbr>
+                <abbr style="margin-left:10px" class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</abbr>
             </div>
 
-            <div class="pure-u-3-4">
+            <div class="pure-u-5-6">
                 <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
-                <h4 class="email-subject">{{ bug.summary }}</h4>
+                <h4 class="email-subject"><a href="{{ makeBugzillaLink(bug.id) }}" target="_blank">{{ bug.id }}</a> {{ bug.summary }}</h4>
+                <!--<p><a href="{{ makeBugzillaLink(bug.id) }}" target="_blank">{{ bug.id }}</a></p>-->
                 <p class="email-desc">
+
+                    <!--{{ bug.last_change_time }}<br>-->
                     {{ bug.extract }}
-                    <br>
-                    {{ bug.last_change_time }}
-                </p>
-                <p>
+                  <br>
                   <span class="badge badge-small badge-green" ng-if="bug.status">{{ bug.status }}</span>
                   <span class="badge badge-small badge-blue" ng-if="bug.resolution">{{ bug.resolution }}</span>
                 </p>
@@ -125,7 +125,7 @@
                     <p class="external-url">
                       <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}"
                          target="_blank">
-                        https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}
+                        {{ makeBugzillaLink(bug.id) }}
                       </a>
                     </p>
                     <p class="email-content-subtitle">
@@ -164,7 +164,7 @@
                <div class="pure-u-3-4">
                <p class="email-content-subtitle">
                         By <b>{{ comment.creator.name }}</b> at
-                        <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}#c{{ $index }}"><span>{{ comment.creation_time }}</span></a>
+                        <a href="{{ makeBugzillaLink(bug.id) }}#c{{ $index }}"><span>{{ comment.creation_time }}</span></a>
                         <br>
                         <span>{{ displayTimeAgo(comment.creation_time) }}</span>
                </p>

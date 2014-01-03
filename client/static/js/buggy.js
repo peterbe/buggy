@@ -3,7 +3,7 @@
 'use strict';
 
 var BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
-
+var MAX_BACKGROUND_DOWNLOADS = 20;
 
 var SAMPLE_BUGS = [
 
@@ -91,6 +91,11 @@ function BugsController($scope, $http) {
   }
 
   function lastChangeTimeSorter(bug) {
+    return bug.last_change_time;
+  }
+  //$scope.lastChangeTimeSorter = lastChangeTimeSorter;
+  $scope.lastChangeTimeSorter = function(bug) {
+    console.log(bug.id, bug.last_change_time);
     return bug.last_change_time;
   }
 
@@ -251,7 +256,7 @@ function BugsController($scope, $http) {
   var _downloaded_comments = 0;
   function downloadSomeComments() {
     console.log('Hmm... what to download?', _downloaded_comments);
-    if (_downloaded_comments > 10) {
+    if (_downloaded_comments > MAX_BACKGROUND_DOWNLOADS) {
       $scope.loaders.fetching_comments = false;
       return;  // we've pre-emptively downloaded too much
     }
@@ -291,6 +296,9 @@ function BugsController($scope, $http) {
   $scope.avatarURL = function(email, size) {
     size = size || 64;
     var secure = document.location.protocol === 'https:';
+    if (email === 'mozilla+bugcloser@davedash.com') {
+      return 'static/images/bugzilla-icon.png';
+    }
     // commented out for offline dev return get_gravatar(email, size, secure);
     return 'static/images/avatar.png';
   };
@@ -307,6 +315,10 @@ function BugsController($scope, $http) {
     localForage.clear(function() {
       loadBugs();
     });
+  };
+
+  $scope.makeBugzillaLink = function(id, comment_index) {
+    return 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + id;
   };
 
   $scope.hasAdditionalComments = function(bug) {
