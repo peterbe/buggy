@@ -50,8 +50,16 @@
     </div>
 
     <div class="pure-u-1" id="list">
+        <div id="list-options">
+          <p>
+                      <a href="#" ng-click="refreshBugs()"
+                       title="Can't wait to see if it's updated remotely?"
+                       ><img src="static/images/refresh.png" alt="Refresh"> Refresh List</a>
+          </p>
+        </div>
         <!-- consider `email-item-selected` -->
         <!-- consider `email-item-unread` -->
+        <div id="list-items">
         <div class="email-item pure-g" ng-repeat="bug in bugs | orderBy:'last_change_time':true track by bug.id"
              ng-class="{'email-item-unread': bug.unread}" ng-click="selectBug(bug)">
             <div class="pure-u">
@@ -74,6 +82,7 @@
                 </p>
             </div>
         </div>
+        </div>
 
     </div>
 
@@ -93,7 +102,11 @@
               <h2>In Memory</h2>
               <dl>
                 <dt># Bugs in scope</dt>
-                <dd>{{ bugs.length }}</dd>
+                <dd>{{ config_stats.total_bugs }}</dd>
+                <dt># Comments in all bugs</dt>
+                <dd>{{ config_stats.total_comments }}</dd>
+                <dt>Data downloaded</dt>
+                <dd>{{ config_stats.data_downloaded_human }}</dd>
               </dl>
             </div>
 
@@ -188,6 +201,10 @@
       <p class="blinking">Refreshing bug and comments</p>
     </div>
 
+    <div class="loading pure-u ng-hide" ng-show="loaders.refreshing_bugs">
+      <p class="blinking">Refreshing bug list</p>
+    </div>
+
     <div class="errornotice pure-u ng-hide" ng-show="errors.update_comments">
       <p>Remote trouble. Unable to fetch the bug comments.</p>
     </div>
@@ -202,8 +219,11 @@
 <script src="static/js/vendor/localForage.js"></script>
 <script src="static/js/vendor/underscore-min.js"></script>
 <script src="static/js/vendor/moment.min.js"></script>
+<script src="static/js/vendor/filesize.min.js"></script>
 <script src="static/js/utils.js"></script>
 <script src="static/js/buggy.js"></script>
+<!-- things that aren't immediately needed -->
+<script async src="static/js/vendor/filesize.min.js"></script>
 
 </body>
 </html>

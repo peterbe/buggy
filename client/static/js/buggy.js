@@ -1,54 +1,9 @@
-/*global: get_gravatar, serializeObject */
+/*global: get_gravatar, serializeObject, filesize */
 
 'use strict';
 
 var BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
 var MAX_BACKGROUND_DOWNLOADS = 20;
-
-var SAMPLE_BUGS = [
-
-                 {component: "General",
-                   product: "Socorro",
-                   id: "953132",
-                   unread: true,
-                   summary: 'Create new group with "long queries" permission',
-                   email: "mail@peterbe.com",
-                   extract: "Bla bla bla bla bla bla",
-                   status: "NEW",
-                   resolution: ""
-                 },
-
-                 {component: "Middleware",
-                   product: "Socorro",
-                   id: "762114",
-                   unread: true,
-                   summary: "Add a new service to get release channels by product",
-                   email: "mail@peterbe.com",
-                   extract: "Bla bla bla bla bla bla",
-                   status: "NEW",
-                   resolution: ""
-                 },
-                 {component: "Middleware",
-                   product: "Socorro",
-                   id: "772230",
-                   unread: true,
-                   summary: "products/builds service should not use releases_raw directly",
-                   email: "mail@peterbe.com",
-                   extract: "Bla bla bla bla bla bla",
-                   status: "NEW",
-                   resolution: ""
-                 },
-                 {component: "Infra",
-                   product: "Socorro",
-                   id: "772659",
-                   unread: true,
-                   summary: "totalPages and totalCount doesn't add up in middleware",
-                   email: "peterbe@mozilla.com",
-                   extract: "Bla bla bla bla bla bla",
-                   status: "RESOLVED",
-                   resolution: "FIXED"
-                 }
-                 ];
 
 var _INCLUDE_FIELDS = 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary';
 // utils stuff
@@ -68,18 +23,38 @@ function BugsController($scope, $http) {
 
   $scope.bugs = [];
   $scope.in_config = false;
+  $scope.data_downloaded = 0;
 
   $scope.loaders = {
      fetching_bugs: false,
      fetching_comments: false,
-     refreshing_bug: false
+     refreshing_bug: false,
+     refreshing_bugs: false
   };
 
   $scope.errors = {
      update_comments: false
   };
 
+  $scope.config_stats = {
+     data_downloaded_human: '',
+     total_comments: 0
+
+  };
   $scope.toggleConfig = function() {
+    if (!$scope.in_config) {
+      // before opening the config pane, preload some stats
+
+      $scope.config_stats.total_bugs = $scope.bugs.length;
+      $scope.config_stats.data_downloaded_human = filesize($scope.data_downloaded);
+      var total_comments = 0;
+      _.each($scope.bugs, function(bug) {
+        if (bug.comments) {
+          total_comments += bug.comments.length;
+        }
+      });
+      $scope.config_stats.total_comments = total_comments;
+    }
     $scope.in_config = ! $scope.in_config;
   };
 
@@ -104,22 +79,37 @@ function BugsController($scope, $http) {
       //product: 'Socorro',
       product: 'Webtools',
       //component: 'Middleware',
-      component: 'Air Mozilla',
+      //component: 'Air Mozilla',
+      component: 'kanbanzilla',
       include_fields: _INCLUDE_FIELDS
     }).success(function(data, status, headers, config) {
       console.log('Success');
       //console.dir(data);
+      $scope.data_downloaded += JSON.stringify(data).length;
       $scope.bugs = [];
       var bug_ids = [];
       //_.each(_.sortBy(data.bugs, lastChangeTimeSorter), function(bug, index) {
+      var _count_to_pull = data.bugs.length;
       _.each(data.bugs, function(bug, index) {
         // update the local storage
-        localForage.setItem(bug.id, bug);
+        localForage.getItem(bug.id, function(existing_bug) {
+          _count_to_pull--;
+          if (existing_bug != null) {
+            // we already have it, merge!
+            bug.comments = existing_bug.comments;
+            bug.extract = existing_bug.extract;
+          }
+          localForage.setItem(bug.id, bug);
+          $scope.bugs.push(bug);
+          if (!_count_to_pull) {
+            $scope.$apply();
+          }
+        });
         // keep a list of all IDs we use
         bug_ids.push(bug.id);
         // update the scope immediately
         //$scope.bugs.unshift(bug);
-        $scope.bugs.push(bug);
+
       });
       localForage.setItem('bugs', bug_ids);
       if (callback) callback();
@@ -135,6 +125,7 @@ function BugsController($scope, $http) {
       include_fields: _INCLUDE_FIELDS
     }).success(function(data, status, headers, config) {
       console.log('Success');
+      $scope.data_downloaded += JSON.stringify(data).length;
       //console.dir(data);
       if (data.bugs.length) {
         var bug = data.bugs[0];
@@ -166,6 +157,7 @@ function BugsController($scope, $http) {
     fetchComments(bug.id)
       .success(function(data, status, headers, config) {
         console.log('Comments Success');
+        $scope.data_downloaded += JSON.stringify(data).length;
         //console.dir(data);
         bug.comments = data.comments;
         if (bug.comments.length) {
@@ -227,7 +219,8 @@ function BugsController($scope, $http) {
         });
       }
     });
-  }
+  };
+
   // the very first thing to do
   loadBugs(function() {
     console.log('Bugs loaded');
@@ -327,6 +320,20 @@ function BugsController($scope, $http) {
 
   $scope.countAdditionalComments = function(bug) {
     return bug.comments.length - 1;
+  };
+
+  $scope.showFileSize = function(bytes) {
+    return filesize(bytes);
+  };
+
+  $scope.refreshBugs = function() {
+    $scope.loaders.refreshing_bugs = true;
+    fetchAndUpdateBugs(function() {
+      $scope.loaders.refreshing_bugs = false;
+    });
+    //loadBugs(true, function() {
+    //  $scope.loaders.refreshing_bugs = false;
+    //});
   };
 
   $scope.refreshBug = function(bug) {
