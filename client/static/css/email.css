@@ -20,15 +20,15 @@ a {
 }
 #nav {
     margin-left:-600px; /* "left col (nav + list)" width */
-    width:150px;
+    width:180px;
     background: rgb(37, 42, 58);
     text-align: center;
     padding: 2em 0;
 }
 
 #list {
-    margin-left: -450px;
-    width:450px;
+    margin-left: -420px;
+    width:420px;
     border-right: 1px solid #ddd;
 }
 

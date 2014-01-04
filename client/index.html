@@ -27,19 +27,32 @@
         <a href="#" class="nav-menu-button">Menu</a>
 
         <div class="nav-inner">
-            <button class="pure-button primary-button">Compose</button>
+            <!--
+            <button class="pure-button primary-button">Compose</button>-->
 
             <div class="pure-menu pure-menu-open">
                 <ul>
+                    <!--
                     <li><a href="#">Inbox <span class="email-count">(2)</span></a></li>
                     <li><a href="#">Important</a></li>
                     <li><a href="#">Sent</a></li>
                     <li><a href="#">Drafts</a></li>
                     <li><a href="#">Trash</a></li>
-                    <li class="pure-menu-heading">Labels</li>
-                    <li><a href="#"><span class="email-label-personal"></span>Personal</a></li>
+                    -->
+                    <li class="pure-menu-heading">Statuses</li>
+                    <li class="label"
+                        ><a href="#" ng-class="{active: !selected_statuses.length}"
+                          ng-click="filterByStatus('ALL')"
+                          ><span class="status status-ALL"></span>ALL ({{ countByStatus('ALL') }})</a></li>
+                    <li ng-repeat="status in all_possible_statuses"
+                        class="label"
+                        ><a href="#" ng-click="filterByStatus(status)"
+                          ng-class="{active: isSelectedStatus(status)}"
+                          ><span class="status status-{{ status }}"></span>{{ status }} ({{ countByStatus(status) }})</a></li>
+                    <!--
                     <li><a href="#"><span class="email-label-work"></span>Work</a></li>
                     <li><a href="#"><span class="email-label-travel"></span>Travel</a></li>
+                    -->
                     <li class="pure-menu-heading">Options</li>
                     <li><a href="#/config" ng-click="toggleConfig()">Config</a></li>
 
@@ -60,8 +73,8 @@
         <!-- consider `email-item-selected` -->
         <!-- consider `email-item-unread` -->
         <div id="list-items">
-        <div class="email-item pure-g" ng-repeat="bug in bugs | orderBy:'last_change_time':true track by bug.id"
-             ng-class="{'email-item-unread': bug.unread}" ng-click="selectBug(bug)">
+        <div class="email-item pure-g" ng-repeat="bug in bugs | filter:isFilteredStatus | orderBy:'last_change_time':true track by bug.id"
+             ng-class="{'email-item-unread': bug.unread, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)">
             <div class="pure-u">
                 <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.email) }}">
                 <br><br>
@@ -77,8 +90,8 @@
                     <!--{{ bug.last_change_time }}<br>-->
                     {{ bug.extract }}
                   <br>
-                  <span class="badge badge-small badge-green" ng-if="bug.status">{{ bug.status }}</span>
-                  <span class="badge badge-small badge-blue" ng-if="bug.resolution">{{ bug.resolution }}</span>
+                  <span class="badge badge-small badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
+                  <span class="badge badge-small" ng-if="bug.resolution">{{ bug.resolution }}</span>
                 </p>
             </div>
         </div>
@@ -153,8 +166,8 @@
                 </div>
 
                 <div class="pure-u-1-3 email-content-controls">
-                    <span class="badge badge-green" ng-if="bug.status">{{ bug.status }}</span>
-                    <span class="badge badge-blue" ng-if="bug.resolution">{{ bug.resolution }}</span>
+                    <span class="badge badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
+                    <span class="badge badge" ng-if="bug.resolution">{{ bug.resolution }}</span>
 
                     <p>
                       <a href="#" ng-click="refreshBug(bug)"

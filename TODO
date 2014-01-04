@@ -3,10 +3,9 @@ TODO
 
 * First fetch by bugs you're CC'ed on or assigned to
 
-* Header on list to refresh
-
 * Combine history with comments
 
+* Nav color coded statuses
 
 DONE
 ====
@@ -19,3 +18,5 @@ DONE
 * Permlink all dates on comments
 
 * Fix orderBy
+
+* Header on list to refresh

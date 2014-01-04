@@ -106,8 +106,8 @@
 
 #list-options {
     position: fixed;
-    left: 150px;
-    width: 450px;
+    left: 180px;
+    width: 420px;
     top: 0;
     /*box-shadow: 0 0 4px rgba(80,80,80,0.25);*/
     /*box-shadow: 0px 0px 7px 2px rgba(120, 120, 120, 0.6);*/
@@ -123,5 +123,55 @@
 }
 
 #list-items {
-    margin-top: 50px;
+    margin-top: 30px;
+}
+
+#nav li.label {
+    font-size: 80%;
+}
+#nav .pure-menu a {
+  margin-left: 0.1em;
+}
+.pure-menu li a {
+    padding: 4px 20px;
+}
+
+#nav .pure-menu a.active {
+    background: rgb(55, 60, 90);
+}
+.status {
+    background: none repeat scroll 0% 0% #FFC94C;
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    margin-right: 0.5em;
+    border-radius: 3px;
+}
+.status-ALL {
+    background-color: #252A3A;
+}
+.status-UNCONFIRMED, .badge-UNCONFIRMED {
+    background-color: #8156A7;
+}
+.status-NEW, .badge-NEW {
+    background-color: #41ccb4;
+}
+.status-ASSIGNED, .badge-ASSIGNED {
+    background-color: #4D85D1;
+}
+.status-REOPENED, .badge-REOPENED {
+    background-color: #DF2D4F;
+}
+.status-RESOLVED, .badge-RESOLVED {
+    background-color: #5ABA59;
+}
+.status-VERIFIED, .badge-VERIFIED {
+    background-color: #FFC94C;
+}
+.status-CLOSED, .badge-CLOSED {
+    background-color: #999;
+}
+
+#list .email-item-active {
+    background-color: #efefef;
 }

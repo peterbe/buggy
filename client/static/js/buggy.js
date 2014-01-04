@@ -6,6 +6,7 @@ var BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
 var MAX_BACKGROUND_DOWNLOADS = 20;
 
 var _INCLUDE_FIELDS = 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary';
+var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
 // utils stuff
 function makeCommentExtract(comment, max_length) {
   max_length = max_length || 75;
@@ -24,6 +25,14 @@ function BugsController($scope, $http) {
   $scope.bugs = [];
   $scope.in_config = false;
   $scope.data_downloaded = 0;
+  $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
+  $scope.selected_statuses = [];
+  localForage.getItem('selected_statuses', function(value) {
+    if (value != null) {
+      $scope.selected_statuses = value;
+      $scope.$apply();
+    }
+  });
 
   $scope.loaders = {
      fetching_bugs: false,
@@ -41,6 +50,41 @@ function BugsController($scope, $http) {
      total_comments: 0
 
   };
+
+  $scope.filterByStatus = function(status) {
+    if (status === 'ALL') {
+      $scope.selected_statuses = [];
+    } else if (_.contains($scope.selected_statuses, status)) {
+      $scope.selected_statuses = _.filter($scope.selected_statuses, function(s) {
+        return s !== status;
+      });
+    } else {
+      $scope.selected_statuses.push(status);  // TODO uniqueness test
+    }
+    localForage.setItem('selected_statuses', $scope.selected_statuses);
+  };
+
+  $scope.isSelectedStatus = function(status) {
+    return _.contains($scope.selected_statuses, status);
+  };
+
+  $scope.isFilteredStatus = function(bug) {
+    if (!$scope.selected_statuses.length) return true;
+    return _.contains($scope.selected_statuses, bug.status);
+  };
+
+  $scope.countByStatus = function(status) {
+    if (status === 'ALL') {
+      return $scope.bugs.length;
+    } else {
+      var count = 0;
+      _.each($scope.bugs, function(bug) {
+        if (bug.status === status) count++;
+      });
+      return count;
+    }
+  };
+
   $scope.toggleConfig = function() {
     if (!$scope.in_config) {
       // before opening the config pane, preload some stats
@@ -284,6 +328,10 @@ function BugsController($scope, $http) {
     fetchAndUpdateComments(bug);
     console.dir(bug);
     $scope.bug = bug;
+  };
+
+  $scope.isSelectedBug = function(bug) {
+    return bug.id == $scope.bug.id;
   };
 
   $scope.avatarURL = function(email, size) {
