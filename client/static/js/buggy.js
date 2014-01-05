@@ -3,7 +3,7 @@
 'use strict';
 
 var BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
-var MAX_BACKGROUND_DOWNLOADS = 20;
+var MAX_BACKGROUND_DOWNLOADS = 5;
 
 var _INCLUDE_FIELDS = 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
@@ -16,13 +16,37 @@ function makeCommentExtract(comment, max_length) {
   return comment.text;
 }
 
-var module = angular.module('buggyApp', ['ngSanitize']);
+var app = angular.module('buggyApp', ['ngSanitize']);
+
+app.filter('stringArraySort', function() {
+  return function(input) {
+    return input.sort();
+  }
+});
+
+app.directive('whenScrolled', function() {
+  return function(scope, elm, attr) {
+    var raw = elm[0];
+    var funCheckBounds = function(evt) {
+      //console.log("event fired: " + evt.type);
+      var rectObject = raw.getBoundingClientRect();
+      //console.log(rectObject.bottom, window.innerHeight);
+      if (rectObject.bottom < window.innerHeight) {
+        //console.log('**At the bottom');
+        scope.$apply(attr.whenScrolled);
+      }
+
+    };
+    angular.element(window).bind('scroll load', funCheckBounds);
+  };
+});
 
 BugsController.$inject = ['$scope', '$http'];
 
 function BugsController($scope, $http) {
 
   $scope.bugs = [];
+  $scope.list_limit = 40;
   $scope.in_config = false;
   $scope.data_downloaded = 0;
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
@@ -33,16 +57,19 @@ function BugsController($scope, $http) {
       $scope.$apply();
     }
   });
-
+  $scope.products = [];
   $scope.loaders = {
      fetching_bugs: false,
      fetching_comments: false,
      refreshing_bug: false,
-     refreshing_bugs: false
+     refreshing_bugs: false,
+     finding_products: false,
+     downloading_configuration: false
   };
 
   $scope.errors = {
-     update_comments: false
+    update_comments: false,
+    finding_products: false
   };
 
   $scope.config_stats = {
@@ -109,68 +136,83 @@ function BugsController($scope, $http) {
     return $http.get(url);
   }
 
+  function fetchConfiguration(params) {
+    var url = BUGZILLA_URL + 'configuration';
+    //url += '?' + serializeObject(params);
+    console.log("BUGZILLA URL", url);
+    return $http.get(url);
+  }
+
   function lastChangeTimeSorter(bug) {
     return bug.last_change_time;
   }
   //$scope.lastChangeTimeSorter = lastChangeTimeSorter;
   $scope.lastChangeTimeSorter = function(bug) {
-    console.log(bug.id, bug.last_change_time);
     return bug.last_change_time;
   }
 
   function fetchAndUpdateBugs(callback) {
-    fetchBugs({
-      //product: 'Socorro',
-      product: 'Webtools',
-      //component: 'Middleware',
-      //component: 'Air Mozilla',
-      component: 'kanbanzilla',
-      include_fields: _INCLUDE_FIELDS
-    }).success(function(data, status, headers, config) {
-      console.log('Success');
-      //console.dir(data);
-      $scope.data_downloaded += JSON.stringify(data).length;
+    var _count_products = $scope.products;
+    _.each($scope.products, function(product_combo, index) {
+      _count_products--;
+      var params = {
+         include_fields: _INCLUDE_FIELDS
+      };
+      var product, component;
+      if (product_combo.split('::').length === 2) {
+        params.product = product_combo.split('::')[0].trim();
+        params.component = product_combo.split('::')[1].trim();
+      } else {
+        params.product = product_combo.trim();
+      }
       $scope.bugs = [];
-      var bug_ids = [];
-      //_.each(_.sortBy(data.bugs, lastChangeTimeSorter), function(bug, index) {
-      var _count_to_pull = data.bugs.length;
-      _.each(data.bugs, function(bug, index) {
-        // update the local storage
-        localForage.getItem(bug.id, function(existing_bug) {
-          _count_to_pull--;
-          if (existing_bug != null) {
-            // we already have it, merge!
-            bug.comments = existing_bug.comments;
-            bug.extract = existing_bug.extract;
-          }
-          localForage.setItem(bug.id, bug);
-          $scope.bugs.push(bug);
-          if (!_count_to_pull) {
-            $scope.$apply();
-          }
-        });
-        // keep a list of all IDs we use
-        bug_ids.push(bug.id);
-        // update the scope immediately
-        //$scope.bugs.unshift(bug);
+      fetchBugs(params)
+        .success(function(data, status, headers, config) {
+          console.log('Success');
+          //console.dir(data);
+          $scope.data_downloaded += JSON.stringify(data).length;
+          var bug_ids = [];
+          //_.each(_.sortBy(data.bugs, lastChangeTimeSorter), function(bug, index) {
+          var _count_to_pull = data.bugs.length;
+          _.each(data.bugs, function(bug, index) {
+            // update the local storage
+            localForage.getItem(bug.id, function(existing_bug) {
+              _count_to_pull--;
+              if (existing_bug != null) {
+                // we already have it, merge!
+                bug.comments = existing_bug.comments;
+                bug.extract = existing_bug.extract;
+              }
+              localForage.setItem(bug.id, bug);
+              $scope.bugs.push(bug);
+              if (!_count_to_pull && !_count_products) {
+                $scope.$apply();
+              }
+            });
+            // keep a list of all IDs we use
+            bug_ids.push(bug.id);
+            // update the scope immediately
+            //$scope.bugs.unshift(bug);
 
-      });
-      localForage.setItem('bugs', bug_ids);
-      if (callback) callback();
-    }).error(function(data, status, headers, config) {
-      console.log('Failure');
-      console.dir(data);
+          });
+          localForage.setItem('bugs', bug_ids);
+          if (callback) callback();
+        }).error(function(data, status, headers, config) {
+          console.warn('Failure');
+          console.dir(data);
+        });
     });
   }
 
+
   function fetchAndUpdateBug(bug, callback) {
     fetchBugs({
-      id: bug.id,
+       id: bug.id,
       include_fields: _INCLUDE_FIELDS
     }).success(function(data, status, headers, config) {
       console.log('Success');
       $scope.data_downloaded += JSON.stringify(data).length;
-      //console.dir(data);
+        //console.dir(data);
       if (data.bugs.length) {
         var bug = data.bugs[0];
         _.each($scope.bugs, function(old_bug, index) {
@@ -183,7 +225,7 @@ function BugsController($scope, $http) {
       }
       if (callback) callback();
     }).error(function(data, status, headers, config) {
-      console.log('Failure to update bug');
+      console.warn('Failure to update bug');
       console.dir(data);
     });
   }
@@ -200,7 +242,7 @@ function BugsController($scope, $http) {
     console.log('About to update comments');
     fetchComments(bug.id)
       .success(function(data, status, headers, config) {
-        console.log('Comments Success');
+        //console.log('Comments Success');
         $scope.data_downloaded += JSON.stringify(data).length;
         //console.dir(data);
         bug.comments = data.comments;
@@ -226,12 +268,20 @@ function BugsController($scope, $http) {
       });
   }
 
+  function loadProducts() {
+    localForage.getItem('products', function(value) {
+      if (value != null && value.length) {
+        $scope.products = value;
+      }
+    });
+  }
+  loadProducts();
+
+
   /* Pulls bugs from local storage and if nothing's there,
    * fetch it remotely */
   function loadBugs(callback) {
     localForage.getItem('bugs', function(value) {
-      //console.log('VALUE');
-      //console.dir(value);
       if (value != null) {
         var _count_to_pull = value.length;
         _.each(value, function(id, index) {
@@ -247,6 +297,7 @@ function BugsController($scope, $http) {
               // all getItem calls have called back
               $scope.$apply();
               // start pulling down comments pre-emptively
+              console.log('Done loading bugs. Start downloading some comments.');
               downloadSomeComments();
               if (callback) callback();
             }
@@ -254,20 +305,23 @@ function BugsController($scope, $http) {
         });
       } else {
         // need to fetch remotely
-        $scope.loaders.fetching_bugs = true;
-        fetchAndUpdateBugs(function() {
-          $scope.loaders.fetching_bugs = false;
-          // start pulling down comments pre-emptively
-          downloadSomeComments();
-          if (callback) callback();
-        });
+        if ($scope.products.length) {
+          $scope.loaders.fetching_bugs = true;
+          console.log("Start fetchAndUpdateBugs()");
+          fetchAndUpdateBugs(function() {
+            $scope.loaders.fetching_bugs = false;
+            // start pulling down comments pre-emptively
+            downloadSomeComments();
+            if (callback) callback();
+          });
+        }
       }
     });
   };
 
+
   // the very first thing to do
   loadBugs(function() {
-    console.log('Bugs loaded');
     localForage.getItem('selected_bug', function(id) {
       if (id) {
         localForage.getItem(id, function(bug) {
@@ -292,11 +346,11 @@ function BugsController($scope, $http) {
    * */
   var _downloaded_comments = 0;
   function downloadSomeComments() {
-    console.log('Hmm... what to download?', _downloaded_comments);
     if (_downloaded_comments > MAX_BACKGROUND_DOWNLOADS) {
       $scope.loaders.fetching_comments = false;
       return;  // we've pre-emptively downloaded too much
     }
+    console.log('Hmm... what to download?', _downloaded_comments);
 
     var _downloading = false;
     // we want to do this to the most recent bugs first
@@ -326,7 +380,7 @@ function BugsController($scope, $http) {
     bug.unread = false;
     localForage.setItem('selected_bug', bug.id);
     fetchAndUpdateComments(bug);
-    console.dir(bug);
+    //console.dir(bug);
     $scope.bug = bug;
   };
 
@@ -375,13 +429,12 @@ function BugsController($scope, $http) {
   };
 
   $scope.refreshBugs = function() {
+    console.log('Start refreshing bugs');
+    $scope.products_changed = false;
     $scope.loaders.refreshing_bugs = true;
     fetchAndUpdateBugs(function() {
       $scope.loaders.refreshing_bugs = false;
     });
-    //loadBugs(true, function() {
-    //  $scope.loaders.refreshing_bugs = false;
-    //});
   };
 
   $scope.refreshBug = function(bug) {
@@ -392,6 +445,107 @@ function BugsController($scope, $http) {
         $scope.loaders.refreshing_bug = false;
       });
     });
+  };
+
+  $scope.loadMore = function() {
+    $scope.list_limit *= 2;
+    console.log("Limit to", $scope.list_limit);
+
+    _downloaded_comments = 0;  // reset this so we can load more
+    console.log('in loadMore()');
+    downloadSomeComments();
+  };
+
+  $scope.canLoadMore = function() {
+    return $scope.bugs.length > $scope.list_limit;
+  };
+
+  function findProductsByEmail(email, callback) {
+    var params = {
+      include_fields: 'product,component',
+      email1: email,
+      email1_assigned_to: 1,
+      //email1_qa_contact: 1,
+      //email1_creator: 1
+    };
+    fetchBugs(params)
+      .success(function(data, status, headers, config) {
+        _.each(data.bugs, function(bug) {
+          var combo = bug.product + ' :: ' + bug.component;
+          if (!_.contains($scope.products, combo)) {
+            $scope.products.push(combo);
+          }
+        });
+        if (callback) callback();
+      }).error(function(data, status, headers, config) {
+        console.warn('Failure');
+        console.dir(data);
+        $scope.errors.finding_products = true;
+        if (callback) callback();
+      });
+  }
+
+  $scope.removeProduct = function(combo) {
+    $scope.products = _.filter($scope.products, function(p) {
+      return p !== combo;
+    });
+    localForage.setItem('products', $scope.products);
+    $scope.products_changed = true;
+  };
+
+  $scope.email_search = '';
+  $scope.searchProductsByEmail = function() {
+    if (this.email_search && this.email_search.trim()) {
+      console.log('Search by', this.email_search);
+      $scope.loaders.finding_products = true;
+      findProductsByEmail(this.email_search, function() {
+        $scope.loaders.finding_products = false;
+        if ($scope.products.length) {
+          localForage.setItem('products', $scope.products);
+          $scope.products_changed = true;
+        }
+      });
+    }
+  };
+
+  $scope.listScrolled = function() {
+    if (_downloaded_comments) {
+      _downloaded_comments = 0;
+      downloadSomeComments();
+    }
+  };
+
+  $scope.addProduct = function() {
+    console.log('ADD', this.product_choice);
+    $scope.products.push(this.product_choice);
+    $scope.products_changed = true;
+  };
+
+  var _downloading_configuration = false;
+  $scope.product_choices = ['Be patient. It takes a while to download all options.'];
+  $scope.product_choice = null;
+  $scope.startSelectProducts = function() {
+    if (_downloading_configuration) return;
+    $scope.loaders.downloading_configuration = true;
+    _downloading_configuration = true;
+    fetchConfiguration()
+      .success(function(data) {
+        $scope.loaders.downloading_configuration = false;
+        $scope.product_choices = [];
+        console.dir(data.product);
+        var all = [];
+        for (var product_name in data.product) {
+          all.push(product_name);
+          for (var component_name in data.product[product_name].component) {
+            all.push(product_name + ' :: ' + component_name);
+          }
+        }
+        all.sort();
+        console.dir(all);
+        $scope.product_choices = all;
+      }).error(function() {
+        console.warn('Unable to download configuration');
+      });
   };
 
 }

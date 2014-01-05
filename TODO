@@ -1,11 +1,9 @@
 TODO
 ====
 
-* First fetch by bugs you're CC'ed on or assigned to
-
 * Combine history with comments
 
-* Nav color coded statuses
+* interval that repeatedly fetches with some last_changed_time filter
 
 DONE
 ====
@@ -20,3 +18,7 @@ DONE
 * Fix orderBy
 
 * Header on list to refresh
+
+* Nav color coded statuses
+
+* First fetch by bugs you're CC'ed on or assigned to
