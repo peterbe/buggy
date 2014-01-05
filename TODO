@@ -1,9 +1,13 @@
 TODO
 ====
 
+* Auth!
+
 * Combine history with comments
 
 * interval that repeatedly fetches with some last_changed_time filter
+
+* Fancy select-ui2 thing for products and components
 
 DONE
 ====
@@ -22,3 +26,5 @@ DONE
 * Nav color coded statuses
 
 * First fetch by bugs you're CC'ed on or assigned to
+
+* Cache /configuration API (cache the 'all' variable)

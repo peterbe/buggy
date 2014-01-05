@@ -71,6 +71,11 @@
                       <a href="#" ng-click="refreshBugs()"
                        title="Can't wait to see if it's updated remotely?"
                        ><img src="static/images/refresh.png" alt="Refresh"> Refresh List</a>
+
+                      <a href="#" ng-click="reDownloadSomeComments()"
+                       style="margin-left:15px"
+                       title="Download more comments in the background"
+                       ><img src="static/images/download.png" alt="Download"> Download more comments</a>
           </p>
         </div>
         <!-- consider `email-item-selected` -->
@@ -122,11 +127,22 @@
             </div>
             <div class="email-content-body">
               <h2>Products &amp; Components</h2>
-              <ul>
-                <li ng-repeat="combo in products | stringArraySort">{{ combo }}
-                  <a href="" ng-click="removeProduct(combo)" title="Remove '{{ combo }}'"><img src="static/images/trash.png" alt="Trash"></a>
-                </li>
-              </ul>
+              <table class="pure-table">
+                <thead>
+                  <tr>
+                    <th>Product &amp; Component</th>
+                    <th>Count</th>
+                    <th>&nbsp;</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="combo in products | stringArraySort">
+                    <td>{{ combo }}</td>
+                    <td>({{ countBugsByProduct(combo) }})</td>
+                    <td><a href="" ng-click="removeProduct(combo)" title="Remove '{{ combo }}'"><img src="static/images/trash.png" alt="Trash"></a></td>
+                  </tr>
+                </tbody>
+              </table>
               <p ng-if="products_changed">
                 <a href="#" ng-click="refreshBugs()"><img src="static/images/refresh.png" alt="Refresh"> Refresh list now</a>
               </p>
