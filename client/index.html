@@ -26,7 +26,6 @@
     <div class="pure-u" id="nav">
         <a href="#" class="nav-menu-button">Menu</a>
 
-
         <div class="nav-inner">
             <!--
             <button class="pure-button primary-button">Compose</button>-->
@@ -181,8 +180,15 @@
 
             <div class="email-content-body">
               <h2>Debug Tools</h2>
+              <form ng-submit="cleanLocalStorage()">
+                <p>
+                  <button class="pure-button pure-button-primary">Clean Local Storage</button>
+                </p>
+              </form>
               <form ng-submit="clearLocalStorage()">
-                <button class="pure-button pure-button-primary">Clear Local Storage</button>
+                <p>
+                  <button class="pure-button pure-button-primary">Clear All Local Storage</button>
+                </p>
               </form>
             </div>
 
@@ -258,28 +264,8 @@
         </div><!-- /!empty -->
     </div>
 
-    <div class="loading pure-u ng-hide" ng-show="loaders.fetching_bugs">
-      <p class="blinking">Fetching bugs</p>
-    </div>
-
-    <div class="loading pure-u ng-hide" ng-show="loaders.fetching_comments">
-      <p class="blinking">Fetching comments</p>
-    </div>
-
-    <div class="loading pure-u ng-hide" ng-show="loaders.refreshing_bug">
-      <p class="blinking">Refreshing bug and comments</p>
-    </div>
-
-    <div class="loading pure-u ng-hide" ng-show="loaders.refreshing_bugs">
-      <p class="blinking">Refreshing bug list</p>
-    </div>
-
-    <div class="loading pure-u ng-hide" ng-show="loaders.finding_products">
-      <p class="blinking">Finding Products &amp; Components</p>
-    </div>
-
-    <div class="loading pure-u ng-hide" ng-show="loaders.downloading_configuration">
-      <p class="blinking">Downloading all possible Products &amp; Components</p>
+    <div class="loading pure-u ng-hide" ng-show="loading">
+      <p class="blinking">{{ loading.message }}</p>
     </div>
 
     <div class="errornotice pure-u ng-hide" ng-show="errors.update_comments">
@@ -300,6 +286,7 @@
 <script src="static/js/vendor/underscore-min.js"></script>
 <script src="static/js/vendor/moment.min.js"></script>
 <script src="static/js/vendor/filesize.min.js"></script>
+<script src="static/js/angularforage.js"></script>
 <script src="static/js/utils.js"></script>
 <script src="static/js/buggy.js"></script>
 <!-- things that aren't immediately needed -->

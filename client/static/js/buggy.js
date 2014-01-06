@@ -2,6 +2,10 @@
 
 'use strict';
 
+
+
+
+
 var BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
 
@@ -51,21 +55,12 @@ function BugsController($scope, $http) {
   $scope.data_downloaded = 0;
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
   $scope.selected_statuses = [];
-  localForage.getItem('selected_statuses', function(value) {
+  angularForage.getItem($scope, 'selected_statuses', function(value) {
     if (value != null) {
       $scope.selected_statuses = value;
-      $scope.$apply();
     }
   });
   $scope.products = [];
-  $scope.loaders = {
-     fetching_bugs: false,
-     fetching_comments: false,
-     refreshing_bug: false,
-     refreshing_bugs: false,
-     finding_products: false,
-     downloading_configuration: false
-  };
 
   $scope.errors = {
     update_comments: false,
@@ -77,6 +72,15 @@ function BugsController($scope, $http) {
      total_comments: 0
 
   };
+
+  /* Used to put a notice loading message on the screen */
+  $scope.loading = null;
+  function startLoading(msg) {
+    $scope.loading = {message: msg};
+  }
+  function stopLoading() {
+    $scope.loading = null;
+  }
 
   $scope.filterByStatus = function(status) {
     if (status === 'ALL') {
@@ -153,14 +157,12 @@ function BugsController($scope, $http) {
   }
 
   function fetchAndUpdateBugs(callback) {
-    var _count_products = $scope.products;
+    var _products_left = $scope.products.length;
     var bug_ids = [];
     _.each($scope.products, function(product_combo, index) {
-      _count_products--;
       var params = {
          include_fields: _INCLUDE_FIELDS
       };
-      //var product, component;
       if (product_combo.split('::').length === 2) {
         params.product = product_combo.split('::')[0].trim();
         params.component = product_combo.split('::')[1].trim();
@@ -173,15 +175,15 @@ function BugsController($scope, $http) {
           console.log('Success');
           //console.dir(data);
           $scope.data_downloaded += JSON.stringify(data).length;
-          //_.each(_.sortBy(data.bugs, lastChangeTimeSorter), function(bug, index) {
-          var _count_to_pull = data.bugs.length;
+          _products_left--;
+          var _bugs_left = data.bugs.length;
           _.each(data.bugs, function(bug, index) {
             // keep a list of all IDs we use
             bug_ids.push(bug.id);
 
             // update the local storage
             localForage.getItem(bug.id, function(existing_bug) {
-              _count_to_pull--;
+              _bugs_left--;
               if (existing_bug != null) {
                 // we already have it, merge!
                 bug.comments = existing_bug.comments;
@@ -189,16 +191,13 @@ function BugsController($scope, $http) {
               }
               localForage.setItem(bug.id, bug);
               $scope.bugs.push(bug);
-              if (!_count_to_pull && !_count_products) {
+              if (!_bugs_left && !_products_left) {
                 // all callbacks for all products and bugs have returned
                 console.log("Storing a list of ", bug_ids.length, "bugs");
                 localForage.setItem('bugs', bug_ids);
                 $scope.$apply();
               }
             });
-            // update the scope immediately
-            //$scope.bugs.unshift(bug);
-
           });
           if (callback) callback();
         }).error(function(data, status, headers, config) {
@@ -287,17 +286,17 @@ function BugsController($scope, $http) {
     localForage.getItem('bugs', function(value) {
       if (value != null) {
         console.log("Found", value.length, "bug ids");
-        var _count_to_pull = value.length;
+        var _bugs_left = value.length;
         _.each(value, function(id, index) {
           localForage.getItem(id, function(bug) {
             // count down
-            _count_to_pull--;
+            _bugs_left--;
             if (bug != null) {
               $scope.bugs.push(bug);
             } else {
               console.warn('No bug data on', id);
             }
-            if (!_count_to_pull) {
+            if (!_bugs_left) {
               // all getItem calls have called back
               $scope.$apply();
               // start pulling down comments pre-emptively
@@ -310,10 +309,10 @@ function BugsController($scope, $http) {
       } else {
         // need to fetch remotely
         if ($scope.products.length) {
-          $scope.loaders.fetching_bugs = true;
+          startLoading('Feching bugs');
           console.log("Start fetchAndUpdateBugs()");
           fetchAndUpdateBugs(function() {
-            $scope.loaders.fetching_bugs = false;
+            stopLoading();
             // start pulling down comments pre-emptively
             downloadSomeComments();
             if (callback) callback();
@@ -324,19 +323,17 @@ function BugsController($scope, $http) {
   };
 
   // the very first thing to do
-  localForage.getItem('products', function(value) {
+  angularForage.getItem($scope, 'products', function(value) {
     if (value != null) {
       console.log("Stored products", value);
       $scope.products = value;
-      $scope.$apply();
       loadBugs(function() {
         localForage.getItem('selected_bug', function(id) {
           if (id) {
-            localForage.getItem(id, function(bug) {
+            angularForage.getItem($scope, id, function(bug) {
               if (bug) {
                 console.log('selected bug:', bug.id);
                 $scope.bug = bug;
-                $scope.$apply();
               } else {
                 console.warn('selected_bug not available');
               }
@@ -360,7 +357,7 @@ function BugsController($scope, $http) {
   var _downloaded_comments = 0;
   function downloadSomeComments() {
     if (_downloaded_comments > MAX_BACKGROUND_DOWNLOADS) {
-      $scope.loaders.fetching_comments = false;
+      stopLoading();
       return;  // we've pre-emptively downloaded too much
     }
     console.log('Hmm... what to download?', _downloaded_comments);
@@ -372,13 +369,13 @@ function BugsController($scope, $http) {
         _downloading = true;
         _downloaded_comments++;
         console.log("FETCH", bug.id);
-        $scope.loaders.fetching_comments = true;
+        startLoading('Fetching comments');
         fetchAndUpdateComments(bug, downloadSomeComments);
       }
     });
     if (!_downloading) {
       // there was nothing more to pre-emptively download
-      $scope.loaders.fetching_comments = false;
+      stopLoading();
     }
   }
 
@@ -440,6 +437,43 @@ function BugsController($scope, $http) {
     });
   };
 
+  /* Since we store things of the following keys:
+   *   'bugs': ['123', '456'],
+   *   '123': {object},
+   *   '456': {object},
+   *   '789': {object}
+   * There might thus be things in local storage that aren't
+   * referenced in `bugs`.
+   * This happens if you, for example, remove a product that
+   * you're no longer interested in.
+   */
+  function isAllDigits(x) {
+    return !x.match(/[^\d]/);
+  }
+  $scope.cleanLocalStorage = function(callback) {
+    localForage.getItem('bugs', function(bug_ids) {
+      //if (!bug_ids.length) return;
+      localForage.length(function(L) {
+        //console.log('L', L);
+        for (var i=0; i < L; i++) {
+          //console.log(i);
+          localForage.key(i, function(K) {
+            var k = '' + K;
+            if (isAllDigits(k)) {
+              if (!_.contains(bug_ids, K)) {
+                //console.log('Removing', K);
+                localForage.removeItem(K);
+              }
+            }
+            if ((i + 1) === L && callback) {
+              callback();
+            }
+          });
+        }
+      });
+    });
+  };
+
   $scope.makeBugzillaLink = function(id, comment_index) {
     return 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + id;
   };
@@ -459,18 +493,18 @@ function BugsController($scope, $http) {
   $scope.refreshBugs = function() {
     console.log('Start refreshing bugs');
     $scope.products_changed = false;
-    $scope.loaders.refreshing_bugs = true;
+    startLoading('Refreshing bug list')
     fetchAndUpdateBugs(function() {
-      $scope.loaders.refreshing_bugs = false;
+      stopLoading();
     });
   };
 
   $scope.refreshBug = function(bug) {
-    $scope.loaders.refreshing_bug = true;
+    startLoading('Refreshing bug and its comments');
     fetchAndUpdateBug(bug, function() {
       fetchAndUpdateComments(bug, function() {
         $scope.bug = bug;
-        $scope.loaders.refreshing_bug = false;
+        stopLoading();
         precalculateProductCounts();
       });
     });
@@ -520,15 +554,19 @@ function BugsController($scope, $http) {
     });
     localForage.setItem('products', $scope.products);
     $scope.products_changed = true;
+    startLoading("Cleaning up local storage");
+    $scope.cleanLocalStorage(function() {
+      stopLoading();
+    });
   };
 
   $scope.email_search = '';
   $scope.searchProductsByEmail = function() {
     if (this.email_search && this.email_search.trim()) {
       console.log('Search by', this.email_search);
-      $scope.loaders.finding_products = true;
+      startLoading('Finding Products & Components');
       findProductsByEmail(this.email_search, function() {
-        $scope.loaders.finding_products = false;
+        stopLoading();
         if ($scope.products.length) {
           localForage.setItem('products', $scope.products);
           $scope.products_changed = true;
@@ -557,12 +595,11 @@ function BugsController($scope, $http) {
 
   // this is always called in an aync process
   function _downloadConfiguration() {
-    $scope.loaders.downloading_configuration = true;
+    startLoading('Downloading all possible Products & Components');
     fetchConfiguration()
       .success(function(data) {
-        $scope.loaders.downloading_configuration = false;
+        stopLoading();
         $scope.product_choices = [];
-        //console.dir(data.product);
         var all = [];
         for (var product_name in data.product) {
           all.push(product_name);
@@ -589,24 +626,23 @@ function BugsController($scope, $http) {
       console.log('all_product_choices'); console.dir(all_product_choices);
       if (all_product_choices != null) {
         // promising but how long has it been stored?
-        localForage.getItem('all_product_choices_expires', function(expires) {
+        angularForage.getItem($scope, 'all_product_choices_expires', function(expires) {
           if (expires != null) {
             // very promising
             var now = new Date().getTime();
             if (now < expires) {
               // excellent!
               $scope.product_choices = all_product_choices;
-              $scope.$apply();
             } else {
               // it was too old
-              $scope.$apply(_downloadConfiguration);
+              _downloading_configuration();
             }
           } else {
-            $scope.$apply(_downloadConfiguration);
+            _downloadConfiguration();
           }
         });
       } else {
-        $scope.$apply(_downloadConfiguration);
+        _downloadConfiguration();
       }
     });
 
