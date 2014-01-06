@@ -172,7 +172,15 @@
                 <input ng-model="email_search" type="text" placeholder="email@example.com">
                 <button class="pure-button secondary-button">Search</button>
               </form>
-            </div>
+            </div><!-- / products & components -->
+
+            <div class="email-content-body">
+            <form ng-submit="getAuthCookie()" class="pure-form">
+              <input type="email" ng-model="email" placeholder="Email">
+              <input type="password" ng-model="password" placeholder="Password">
+              <button type="submit" class="pure-button pure-button-primary">Sign in</button>
+            </form>
+            </div><!-- / auth -->
 
             <div class="email-content-body">
               <h2>In Memory</h2>

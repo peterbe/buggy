@@ -764,5 +764,26 @@ function BugsController($scope, $timeout, $http) {
     $scope.search_q = '';
     $scope.in_search = false;
   };
+  $scope.getAuthCookie = function() {
+    console.log(this.email, this.password);
+    var params = {
+       Bugzilla_login: this.email,
+       Bugzilla_password: this.password,
+       Bugzilla_remember: 'on',
+       GoAheadAndLogIn: 'Log in'
+    }
+    $http.post(BUGZILLA_LOGIN_URL, params)
+      .success(function(data, status, headers, config) {
+        console.log(data);
+        console.log(status);
+        console.log(headers()['Set-Cookie']);
+        console.dir(config);
+      }).error(function(data, status, headers, config) {
+        console.warn('Failure');
+        console.dir(data);
+        console.log(status);
+      });
+
+  };
 
 }
