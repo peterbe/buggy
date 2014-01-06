@@ -175,3 +175,7 @@
 #list .email-item-active {
     background-color: #efefef;
 }
+
+.email-content-subtitle span {
+    color: #666;
+}
