@@ -251,6 +251,13 @@ function BugsController($scope, $http) {
         if (bug.comments.length) {
           bug.extract = makeCommentExtract(_.last(bug.comments));
         }
+        // we also need to update $scope.bugs where a copy of this bug exists
+        _.each($scope.bugs, function(list_bug, index) {
+          if (list_bug.id === bug.id) {
+            $scope.bugs[index] = bug;
+          }
+        });
+
         localForage.setItem(bug.id, bug);
         if (callback) callback();
       }).error(function(data, status, headers, config) {
@@ -496,6 +503,7 @@ function BugsController($scope, $http) {
     startLoading('Refreshing bug list')
     fetchAndUpdateBugs(function() {
       stopLoading();
+      precalculateProductCounts();
     });
   };
 
@@ -505,7 +513,6 @@ function BugsController($scope, $http) {
       fetchAndUpdateComments(bug, function() {
         $scope.bug = bug;
         stopLoading();
-        precalculateProductCounts();
       });
     });
   };

@@ -28,3 +28,5 @@ DONE
 * First fetch by bugs you're CC'ed on or assigned to
 
 * Cache /configuration API (cache the 'all' variable)
+
+* When downloading comments on a bug, it needs to reset the `extract`
