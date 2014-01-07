@@ -45,9 +45,9 @@ app.directive('whenScrolled', function() {
   };
 });
 
-BugsController.$inject = ['$scope', '$http'];
+BugsController.$inject = ['$scope', '$timeout', '$http'];
 
-function BugsController($scope, $http) {
+function BugsController($scope, $timeout, $http) {
 
   $scope.bugs = [];
   $scope.list_limit = 100;
@@ -278,7 +278,7 @@ function BugsController($scope, $http) {
   }
 
   function loadProducts() {
-    localForage.getItem('products', function(value) {
+    angularForage.getItem($scope, 'products', function(value) {
       if (value != null && value.length) {
         $scope.products = value;
       }
@@ -304,6 +304,8 @@ function BugsController($scope, $http) {
               console.warn('No bug data on', id);
             }
             if (!_bugs_left) {
+              // count how many bugs we have comments for
+              countBugsWithComments();
               // all getItem calls have called back
               $scope.$apply();
               // start pulling down comments pre-emptively
@@ -320,6 +322,8 @@ function BugsController($scope, $http) {
           console.log("Start fetchAndUpdateBugs()");
           fetchAndUpdateBugs(function() {
             stopLoading();
+            // count how many bugs we have comments for
+            countBugsWithComments();
             // start pulling down comments pre-emptively
             downloadSomeComments();
             if (callback) callback();
@@ -365,6 +369,11 @@ function BugsController($scope, $http) {
   function downloadSomeComments() {
     if (_downloaded_comments > MAX_BACKGROUND_DOWNLOADS) {
       stopLoading();
+      $timeout(function() {
+        _downloaded_comments = 0;
+        // recurse
+        downloadSomeComments();
+      }, 30 * 1000);
       return;  // we've pre-emptively downloaded too much
     }
     console.log('Hmm... what to download?', _downloaded_comments);
@@ -396,8 +405,8 @@ function BugsController($scope, $http) {
         // let's not go too crazy
         MAX_BACKGROUND_DOWNLOADS = 30;
       }
-      downloadSomeComments();
     }
+    downloadSomeComments();
   };
 
   // the selected bug
@@ -685,5 +694,14 @@ function BugsController($scope, $http) {
       products_counts[product_combo] = count;
     });
   }
+
+  function countBugsWithComments() {
+    var count = 0;
+    _.each($scope.bugs, function(bug) {
+      if (bug.comments != null) count++;
+    });
+    $scope.count_bugs_with_comments = count;
+  };
+  $scope.count_bugs_with_comments = 0;
 
 }
