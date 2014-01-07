@@ -159,6 +159,7 @@ function BugsController($scope, $http) {
   function fetchAndUpdateBugs(callback) {
     var _products_left = $scope.products.length;
     var bug_ids = [];
+    $scope.bugs = [];
     _.each($scope.products, function(product_combo, index) {
       var params = {
          include_fields: _INCLUDE_FIELDS
@@ -169,7 +170,6 @@ function BugsController($scope, $http) {
       } else {
         params.product = product_combo.trim();
       }
-      $scope.bugs = [];
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           console.log('Success');
@@ -642,7 +642,7 @@ function BugsController($scope, $http) {
               $scope.product_choices = all_product_choices;
             } else {
               // it was too old
-              _downloading_configuration();
+              _downloadConfiguration();
             }
           } else {
             _downloadConfiguration();
