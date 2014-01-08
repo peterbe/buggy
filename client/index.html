@@ -80,15 +80,15 @@
                       <a href="" ng-click="toggleSearch()" title="Search and ye shall find"><img src="static/images/search.png" alt="Search"></a>
 
           </p>
-          <form class="pure-form" ng-if="in_search">
+          <form class="pure-form" id="searchform" ng-submit="submitSearch()" ng-class="{hidden: !in_search}">
             <input type="text" ng-model="search_q" id="search_q" class="pure-input-rounded">
-            <button class="pure-button secondary-button" ng-if="search_q">Clear</button>
+            <button class="pure-button secondary-button" ng-if="search_q" ng-click="clearSearch()">Clear</button>
           </form>
         </div>
         <!-- consider `email-item-selected` -->
         <!-- consider `email-item-unread` -->
         <div id="list-items" when-scrolled="listScrolled()">
-          <div class="email-item pure-g" ng-repeat="bug in bugs | filter:isFilteredStatus | filter:filterBySearch | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
+          <div class="email-item pure-g" ng-repeat="bug in bugs | filter:filterBySearch | filter:isFilteredStatus | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
              ng-class="{'email-item-unread': bug.unread, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)">
             <div class="pure-u">
                 <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.email) }}">
@@ -98,7 +98,7 @@
 
             <div class="pure-u-5-6">
                 <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
-                <h4 class="email-subject"><a href="{{ makeBugzillaLink(bug.id) }}" target="_blank">{{ bug.id }}</a> {{ bug.summary }}</h4>
+                <h4 class="email-subject"><a href="{{ makeBugzillaLink(bug.id) }}" target="_blank">{{ bug.id }}</a> <span ng-bind-html="highlightSearch(bug.summary)"></span></h4>
                 <!--<p><a href="{{ makeBugzillaLink(bug.id) }}" target="_blank">{{ bug.id }}</a></p>-->
                 <p class="email-desc">
 

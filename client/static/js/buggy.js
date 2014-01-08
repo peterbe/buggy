@@ -108,9 +108,35 @@ function BugsController($scope, $timeout, $http) {
 
   $scope.filterBySearch = function(bug) {
     if (!$scope.search_q) return true;
-    console.log('Compare', bug.id, $scope.search_q);
-    return true;
+    if (isAllDigits($scope.search_q)) {
+      return ('' + bug.id).substring(0, $scope.search_q.length) === $scope.search_q;
+    } else {
+      var regex = new RegExp($scope.search_q, 'i');
+      return regex.test(bug.summary);
+    }
+    return false;
   };
+
+  $scope.submitSearch = function() {
+    if ($scope.search_q) {
+      var found_bugs = _.filter($scope.bugs, $scope.filterBySearch);
+      if (found_bugs.length == 1) {
+        $scope.bug = found_bugs[0];
+        $scope.search_q = '';
+        $scope.in_search = false;
+      }
+    }
+  };
+
+  $scope.highlightSearch = function(text) {
+    if (!$scope.search_q) return text;
+    var regex = new RegExp($scope.search_q, 'i');
+    _.each(regex.exec(text), function(match) {
+      text = text.replace(match, '<span class="match">' + match + '</span>');
+    });
+    return text;
+
+  }
 
   $scope.countByStatus = function(status) {
     if (status === 'ALL') {
@@ -184,7 +210,7 @@ function BugsController($scope, $timeout, $http) {
             bug_ids.push(bug.id);
 
             // update the local storage
-            localForage.getItem(bug.id, function(existing_bug) {
+            angularForage.getItem($scope, bug.id, function(existing_bug) {
               _bugs_left--;
               if (existing_bug != null) {
                 // we already have it, merge!
@@ -197,7 +223,6 @@ function BugsController($scope, $timeout, $http) {
                 // all callbacks for all products and bugs have returned
                 console.log("Storing a list of ", bug_ids.length, "bugs");
                 localForage.setItem('bugs', bug_ids);
-                $scope.$apply();
                 if (callback) callback();
               }
             });
@@ -515,6 +540,7 @@ function BugsController($scope, $timeout, $http) {
     $scope.products_changed = false;
     startLoading('Refreshing bug list');
     fetchAndUpdateBugs(function() {
+      console.log('In fetchAndUpdateBugs callback');
       stopLoading();
       precalculateProductCounts();
     });
@@ -727,7 +753,11 @@ function BugsController($scope, $timeout, $http) {
       }, 100);
     }
     $scope.in_search = ! $scope.in_search;
+  };
 
+  $scope.clearSearch = function() {
+    $scope.search_q = '';
+    $scope.in_search = false;
   };
 
 }

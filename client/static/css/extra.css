@@ -179,3 +179,16 @@
 .email-content-subtitle span {
     color: #666;
 }
+
+.hidden { display: none; }
+
+#searchform {
+    margin: 5px 20px;
+}
+#searchform input[type="text"] {
+    width: 70%;
+}
+
+span.match {
+    background-color: #FFFF00;
+}
