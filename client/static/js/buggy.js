@@ -10,7 +10,7 @@ var OLD_BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 3;//10;
 
-var _INCLUDE_FIELDS = 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary';
+var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
 // utils stuff
 function makeCommentExtract(comment, max_length) {
@@ -55,6 +55,7 @@ function BugsController($scope, $timeout, $http) {
   $scope.search_q = '';
   $scope.in_search = false;
   $scope.in_config = false;
+  $scope.email = '';
   $scope.data_downloaded = 0;
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
   $scope.selected_statuses = [];
@@ -104,6 +105,9 @@ function BugsController($scope, $timeout, $http) {
 
   $scope.isFilteredStatus = function(bug) {
     if (!$scope.selected_statuses.length) return true;
+    if ($scope.email && _.contains($scope.selected_statuses, 'ASSIGNED_TO') && $scope.email == bug.assigned_to) {
+      return true;
+    }
     return _.contains($scope.selected_statuses, bug.status);
   };
 
@@ -142,6 +146,12 @@ function BugsController($scope, $timeout, $http) {
   $scope.countByStatus = function(status) {
     if (status === 'ALL') {
       return $scope.bugs.length;
+    } else if (status === 'ASSIGNED_TO') {
+      var count = 0;
+      _.each($scope.bugs, function(bug) {
+        if (bug.assigned_to == $scope.email) count++;
+      });
+      return count;
     } else {
       var count = 0;
       _.each($scope.bugs, function(bug) {
@@ -451,6 +461,7 @@ function BugsController($scope, $timeout, $http) {
     $scope.in_config = false; // in case
     bug.empty = false;
     bug.unread = false;
+    console.dir(bug);
     localForage.setItem('selected_bug', bug.id);
     fetchAndUpdateComments(bug);
     //console.dir(bug);
@@ -467,7 +478,7 @@ function BugsController($scope, $timeout, $http) {
     if (email === 'mozilla+bugcloser@davedash.com') {
       return 'static/images/bugzilla-icon.png';
     }
-    // commented out for offline dev return get_gravatar(email, size, secure);
+    return get_gravatar(email, size, secure);
     return 'static/images/avatar.png';
   };
 
@@ -577,8 +588,7 @@ function BugsController($scope, $timeout, $http) {
   function findProductsByEmail(email, callback) {
     var params = {
       include_fields: 'product,component',
-      email1: email,
-      email1_assigned_to: 1,
+      assigned_to: email,
       //email1_qa_contact: 1,
       //email1_creator: 1
     };
@@ -611,12 +621,11 @@ function BugsController($scope, $timeout, $http) {
     });
   };
 
-  $scope.email_search = '';
   $scope.searchProductsByEmail = function() {
-    if (this.email_search && this.email_search.trim()) {
-      console.log('Search by', this.email_search);
+    if (this.email && this.email.trim()) {
+      console.log('Search by', this.email);
       startLoading('Finding Products & Components');
-      findProductsByEmail(this.email_search, function() {
+      findProductsByEmail(this.email, function() {
         stopLoading();
         if ($scope.products.length) {
           localForage.setItem('products', $scope.products);
@@ -784,6 +793,10 @@ function BugsController($scope, $timeout, $http) {
         console.log(status);
       });
 
+  };
+
+  $scope.isAssignedTo = function(bug) {
+    return bug.assigned_to && bug.assigned_to != 'nobody@mozilla.org';
   };
 
 }

@@ -51,6 +51,12 @@
                         ><a href="#" ng-click="filterByStatus(status)"
                           ng-class="{active: isSelectedStatus(status)}"
                           ><span class="status status-{{ status }}"></span>{{ status }} ({{ countByStatus(status) }})</a></li>
+                    <li class="label" ng-if="email"
+                        ><a href="#"
+                          ng-class="{active: isSelectedStatus('ASSIGNED_TO')}"
+                          ng-click="filterByStatus('ASSIGNED_TO')"
+                          ><span class="status status-ASSIGNED_TO"></span>ASSIGNED TO ME ({{ countByStatus('ASSIGNED_TO') }})</a></li>
+
                     <!--
                     <li><a href="#"><span class="email-label-work"></span>Work</a></li>
                     <li><a href="#"><span class="email-label-travel"></span>Travel</a></li>
@@ -91,7 +97,7 @@
           <div class="email-item pure-g" ng-repeat="bug in bugs | filter:filterBySearch | filter:isFilteredStatus | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
              ng-class="{'email-item-unread': bug.unread, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)">
             <div class="pure-u">
-                <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.email) }}">
+                <img class="email-avatar" alt="Avatar" height="32" width="32" ng-if="isEmail(bug.creator)" ng-src="{{ avatarURL(bug.creator) }}">
                 <br><br>
                 <abbr style="margin-left:10px" class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</abbr>
             </div>
@@ -169,7 +175,7 @@
               </form>
               <form ng-submit="searchProductsByEmail()" class="pure-form">
                 <p>Find products &amp; components by bugs you're assigned to:</p>
-                <input ng-model="email_search" type="text" placeholder="email@example.com">
+                <input ng-model="email" type="text" placeholder="email@example.com">
                 <button class="pure-button secondary-button">Search</button>
               </form>
             </div><!-- / products & components -->
@@ -232,19 +238,7 @@
                         {{ makeBugzillaLink(bug.id) }}
                       </a>
                     </p>
-                    <p class="email-content-subtitle">
-                        By
-                        <b ng-if="!isEmail(bug.creator.name)">{{ bug.creator.name }}</b>
-
-                        <b ng-if="isEmail(bug.creator.name)">
-                        <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.creator.name) }}">
-                        {{ bug.creator.name }}</b>
-                        at <span>{{ bug.creation_time }}</span>
-
-			last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
-                    </p>
                 </div>
-
                 <div class="pure-u-1-3 email-content-controls">
                     <span class="badge badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
                     <span class="badge badge" ng-if="bug.resolution">{{ bug.resolution }}</span>
@@ -258,6 +252,25 @@
                     <button class="pure-button secondary-button">Forward</button>
                     <button class="pure-button secondary-button">Move to</button>-->
                 </div>
+
+
+                <div class="pure-u" ng-if="bug.creator_detail.email">
+                    <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.creator_detail.email) }}">
+                </div>
+                <div class="pure-u-3-4">
+                  <p class="email-content-subtitle">
+                        By <b>{{ bug.creator_detail.real_name }}</b> at
+                        <span>{{ bug.creation_time }}</span><br>
+			last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
+                  </p>
+                </div>
+
+                <div class="pure-u-3-4" ng-if="isAssignedTo(bug)">
+                  <p class="email-content-subtitle">
+                        Assigned to <b>{{ bug.assigned_to_detail.real_name }}</b>
+                  </p>
+                </div>
+
             </div>
 
 
