@@ -76,12 +76,19 @@
                        title="Download more comments in the background
                        ({{ count_bugs_with_comments }}/{{ bugs.length }})"
                        ><img src="static/images/download.png" alt="Download"> Download more comments</a>
+
+                      <a href="" ng-click="toggleSearch()" title="Search and ye shall find"><img src="static/images/search.png" alt="Search"></a>
+
           </p>
+          <form class="pure-form" ng-if="in_search">
+            <input type="text" ng-model="search_q" id="search_q" class="pure-input-rounded">
+            <button class="pure-button secondary-button" ng-if="search_q">Clear</button>
+          </form>
         </div>
         <!-- consider `email-item-selected` -->
         <!-- consider `email-item-unread` -->
         <div id="list-items" when-scrolled="listScrolled()">
-          <div class="email-item pure-g" ng-repeat="bug in bugs | filter:isFilteredStatus | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
+          <div class="email-item pure-g" ng-repeat="bug in bugs | filter:isFilteredStatus | filter:filterBySearch | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
              ng-class="{'email-item-unread': bug.unread, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)">
             <div class="pure-u">
                 <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.email) }}">
@@ -172,8 +179,8 @@
               <dl>
                 <dt># Bugs in scope</dt>
                 <dd>{{ config_stats.total_bugs }}</dd>
-                <dt># Comments in all bugs</dt>
-                <dd>{{ config_stats.total_comments }}</dd>
+                <dt># Comments in all bugs ({{ count_bugs_with_comments }} of {{ config_stats.total_bugs }})</dt>
+                <dd>{{ count_total_comments }}</dd>
                 <dt>Data downloaded</dt>
                 <dd>{{ config_stats.data_downloaded_human }}</dd>
               </dl>
@@ -255,7 +262,7 @@
                <div class="pure-u-3-4">
                <p class="email-content-subtitle">
                         By <b>{{ comment.creator.name }}</b> at
-                        <a href="{{ makeBugzillaLink(bug.id) }}#c{{ $index }}"><span>{{ comment.creation_time }}</span></a>
+                        <a href="{{ makeBugzillaLink(bug.id) }}#c{{ $index }}" target="_blank"><span>{{ comment.creation_time }}</span></a>
                         <br>
                         <span>{{ displayTimeAgo(comment.creation_time) }}</span>
                </p>

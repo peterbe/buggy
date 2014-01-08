@@ -7,7 +7,7 @@
 
 
 var BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
-var MAX_BACKGROUND_DOWNLOADS = 10;
+var MAX_BACKGROUND_DOWNLOADS = 3;//10;
 
 var _INCLUDE_FIELDS = 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
@@ -51,6 +51,8 @@ function BugsController($scope, $timeout, $http) {
 
   $scope.bugs = [];
   $scope.list_limit = 100;
+  $scope.search_q = '';
+  $scope.in_search = false;
   $scope.in_config = false;
   $scope.data_downloaded = 0;
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
@@ -104,6 +106,12 @@ function BugsController($scope, $timeout, $http) {
     return _.contains($scope.selected_statuses, bug.status);
   };
 
+  $scope.filterBySearch = function(bug) {
+    if (!$scope.search_q) return true;
+    console.log('Compare', bug.id, $scope.search_q);
+    return true;
+  };
+
   $scope.countByStatus = function(status) {
     if (status === 'ALL') {
       return $scope.bugs.length;
@@ -122,13 +130,7 @@ function BugsController($scope, $timeout, $http) {
 
       $scope.config_stats.total_bugs = $scope.bugs.length;
       $scope.config_stats.data_downloaded_human = filesize($scope.data_downloaded);
-      var total_comments = 0;
-      _.each($scope.bugs, function(bug) {
-        if (bug.comments) {
-          total_comments += bug.comments.length;
-        }
-      });
-      $scope.config_stats.total_comments = total_comments;
+      countTotalComments();
       precalculateProductCounts();
     }
     $scope.in_config = ! $scope.in_config;
@@ -196,10 +198,10 @@ function BugsController($scope, $timeout, $http) {
                 console.log("Storing a list of ", bug_ids.length, "bugs");
                 localForage.setItem('bugs', bug_ids);
                 $scope.$apply();
+                if (callback) callback();
               }
             });
           });
-          if (callback) callback();
         }).error(function(data, status, headers, config) {
           console.warn('Failure');
           console.dir(data);
@@ -368,12 +370,14 @@ function BugsController($scope, $timeout, $http) {
   var _downloaded_comments = 0;
   function downloadSomeComments() {
     if (_downloaded_comments > MAX_BACKGROUND_DOWNLOADS) {
+      countBugsWithComments();
+      countTotalComments();
       stopLoading();
       $timeout(function() {
         _downloaded_comments = 0;
         // recurse
         downloadSomeComments();
-      }, 30 * 1000);
+      }, 60 * 1000);
       return;  // we've pre-emptively downloaded too much
     }
     console.log('Hmm... what to download?', _downloaded_comments);
@@ -509,7 +513,7 @@ function BugsController($scope, $timeout, $http) {
   $scope.refreshBugs = function() {
     console.log('Start refreshing bugs');
     $scope.products_changed = false;
-    startLoading('Refreshing bug list')
+    startLoading('Refreshing bug list');
     fetchAndUpdateBugs(function() {
       stopLoading();
       precalculateProductCounts();
@@ -695,6 +699,7 @@ function BugsController($scope, $timeout, $http) {
     });
   }
 
+  $scope.count_bugs_with_comments = 0;
   function countBugsWithComments() {
     var count = 0;
     _.each($scope.bugs, function(bug) {
@@ -702,6 +707,27 @@ function BugsController($scope, $timeout, $http) {
     });
     $scope.count_bugs_with_comments = count;
   };
-  $scope.count_bugs_with_comments = 0;
+
+  $scope.count_total_comments = 0;
+  function countTotalComments() {
+    var total_comments = 0;
+    _.each($scope.bugs, function(bug) {
+      if (bug.comments != null) {
+        total_comments += bug.comments.length;
+      }
+    });
+    $scope.count_total_comments = total_comments;
+  }
+
+  $scope.toggleSearch = function() {
+    if (!$scope.in_search) {
+      // it will be enabled
+      setTimeout(function() {
+        document.getElementById('search_q').focus();
+      }, 100);
+    }
+    $scope.in_search = ! $scope.in_search;
+
+  };
 
 }
