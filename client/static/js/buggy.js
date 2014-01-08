@@ -6,7 +6,8 @@
 
 
 
-var BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
+var OLD_BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
+var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 3;//10;
 
 var _INCLUDE_FIELDS = 'assigned_to,product,component,creator,status,id,resolution,last_change_time,creation_time,summary';
@@ -170,7 +171,7 @@ function BugsController($scope, $timeout, $http) {
   }
 
   function fetchConfiguration(params) {
-    var url = BUGZILLA_URL + 'configuration';
+    var url = OLD_BUGZILLA_URL + 'configuration';
     //url += '?' + serializeObject(params);
     console.log("BUGZILLA URL", url);
     return $http.get(url);
@@ -210,7 +211,7 @@ function BugsController($scope, $timeout, $http) {
             bug_ids.push(bug.id);
 
             // update the local storage
-            angularForage.getItem($scope, bug.id, function(existing_bug) {
+            localForage.getItem(bug.id, function(existing_bug) {
               _bugs_left--;
               if (existing_bug != null) {
                 // we already have it, merge!
@@ -223,7 +224,10 @@ function BugsController($scope, $timeout, $http) {
                 // all callbacks for all products and bugs have returned
                 console.log("Storing a list of ", bug_ids.length, "bugs");
                 localForage.setItem('bugs', bug_ids);
-                if (callback) callback();
+                $scope.$apply();
+                if (callback) {
+                  $scope.$apply(callback);
+                }
               }
             });
           });
@@ -274,7 +278,7 @@ function BugsController($scope, $timeout, $http) {
         //console.log('Comments Success');
         $scope.data_downloaded += JSON.stringify(data).length;
         //console.dir(data);
-        bug.comments = data.comments;
+        bug.comments = data.bugs[bug.id].comments;
         if (bug.comments.length) {
           bug.extract = makeCommentExtract(_.last(bug.comments));
         }
@@ -468,6 +472,7 @@ function BugsController($scope, $timeout, $http) {
   };
 
   $scope.isEmail = function(text) {
+    if (!text) return false;
     return text.match(/@/) && !text.match(/\s/);
   };
 

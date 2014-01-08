@@ -254,14 +254,14 @@
 
 
             <div class="email-content-body" ng-repeat="comment in bug.comments">
-               <div class="pure-u" ng-if="isEmail(comment.creator.name)">
-                        <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(comment.creator.name) }}"
+               <div class="pure-u" ng-if="isEmail(comment.creator)">
+                        <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(comment.creator) }}"
                              >
 
                </div>
                <div class="pure-u-3-4">
                <p class="email-content-subtitle">
-                        By <b>{{ comment.creator.name }}</b> at
+                        By <b>{{ comment.creator }}</b> at
                         <a href="{{ makeBugzillaLink(bug.id) }}#c{{ $index }}" target="_blank"><span>{{ comment.creation_time }}</span></a>
                         <br>
                         <span>{{ displayTimeAgo(comment.creation_time) }}</span>
