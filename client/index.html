@@ -181,11 +181,14 @@
             </div><!-- / products & components -->
 
             <div class="email-content-body">
-            <form ng-submit="getAuthCookie()" class="pure-form">
+            <form ng-submit="getAuthCookie()" class="pure-form" ng-if="!auth_token">
               <input type="email" ng-model="email" placeholder="Email">
               <input type="password" ng-model="password" placeholder="Password">
               <button type="submit" class="pure-button pure-button-primary">Sign in</button>
             </form>
+            <p ng-if="auth_token">
+              You have successfully signed in. <a href="#" ng-click="clearAuthToken()">Sign out</a>
+            </p>
             </div><!-- / auth -->
 
             <div class="email-content-body">
@@ -299,12 +302,8 @@
       <p class="blinking">{{ loading.message }}</p>
     </div>
 
-    <div class="errornotice pure-u ng-hide" ng-show="errors.update_comments">
-      <p>Remote trouble. Unable to fetch the bug comments.</p>
-    </div>
-
-    <div class="errornotice pure-u ng-hide" ng-show="errors.finding_products">
-      <p>Remote trouble. Unable to find products &amp; components.</p>
+    <div class="errornotice pure-u ng-hide" ng-show="error_notice">
+      <p>{{ error_notice }}</p>
     </div>
 
 </div>

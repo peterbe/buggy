@@ -3,9 +3,6 @@
 'use strict';
 
 
-
-
-
 var OLD_BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 3;//10;
@@ -56,6 +53,7 @@ function BugsController($scope, $timeout, $http) {
   $scope.in_search = false;
   $scope.in_config = false;
   $scope.email = '';
+  $scope.auth_token = null;
   $scope.data_downloaded = 0;
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
   $scope.selected_statuses = [];
@@ -64,12 +62,17 @@ function BugsController($scope, $timeout, $http) {
       $scope.selected_statuses = value;
     }
   });
+  angularForage.getItem($scope, 'auth_token', function(value) {
+    if (value) {
+      $scope.auth_token = value;
+    }
+  });
+  angularForage.getItem($scope, 'email', function(value) {
+    if (value) {
+      $scope.email = value;
+    }
+  });
   $scope.products = [];
-
-  $scope.errors = {
-    update_comments: false,
-    finding_products: false
-  };
 
   $scope.config_stats = {
      data_downloaded_human: '',
@@ -84,6 +87,16 @@ function BugsController($scope, $timeout, $http) {
   }
   function stopLoading() {
     $scope.loading = null;
+  }
+
+  $scope.error_notice = null;
+  function setErrorNotice(msg, options) {
+    options = options || {};
+    var error_delay = options.error_delay || 10;
+    $scope.error_notice = msg;
+    $timeout(function() {
+      $scope.error_notice = null;
+    }, error_delay * 1000);
   }
 
   $scope.filterByStatus = function(status) {
@@ -167,15 +180,23 @@ function BugsController($scope, $timeout, $http) {
 
       $scope.config_stats.total_bugs = $scope.bugs.length;
       $scope.config_stats.data_downloaded_human = filesize($scope.data_downloaded);
-      console.log("BEFORE", $scope.count_total_comments);
       countTotalComments();
-      console.log("AFTER", $scope.count_total_comments);
       precalculateProductCounts();
     }
     $scope.in_config = ! $scope.in_config;
   };
 
+  function fetchAuthToken(params) {
+    var url = BUGZILLA_URL + 'login';
+    url += '?' + serializeObject(params);
+    console.log("BUGZILLA URL", url);
+    return $http.get(url);
+  }
+
   function fetchBugs(params) {
+    if ($scope.auth_token) {
+      params.token = $scope.auth_token;
+    }
     var url = BUGZILLA_URL + 'bug';
     url += '?' + serializeObject(params);
     console.log("BUGZILLA URL", url);
@@ -193,9 +214,9 @@ function BugsController($scope, $timeout, $http) {
     return bug.last_change_time;
   }
   //$scope.lastChangeTimeSorter = lastChangeTimeSorter;
-  $scope.lastChangeTimeSorter = function(bug) {
-    return bug.last_change_time;
-  }
+//  $scope.lastChangeTimeSorter = function(bug) {
+//    return bug.last_change_time;
+//  }
 
   function fetchAndUpdateBugs(callback) {
     var _products_left = $scope.products.length;
@@ -214,7 +235,6 @@ function BugsController($scope, $timeout, $http) {
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           console.log('Success');
-          //console.dir(data);
           $scope.data_downloaded += JSON.stringify(data).length;
           _products_left--;
           var _bugs_left = data.bugs.length;
@@ -278,6 +298,9 @@ function BugsController($scope, $timeout, $http) {
 
   function fetchComments(id, params) {
     params = params || {};
+    if ($scope.auth_token) {
+      params.token = $scope.auth_token;
+    }
     var url = BUGZILLA_URL + 'bug/' + id + '/comment';
     url += '?' + serializeObject(params);
     console.log("BUGZILLA URL", url);
@@ -308,7 +331,7 @@ function BugsController($scope, $timeout, $http) {
         if (status === 0) {
           // timed out, possibly no internet connection
         } else {
-          $scope.errors.update_comments = true;
+          setErrorNotice('Remote trouble. Unable to fetch the bug comments.');
         }
         console.dir(data);
         console.log('STATUS', status);
@@ -606,7 +629,7 @@ function BugsController($scope, $timeout, $http) {
       }).error(function(data, status, headers, config) {
         console.warn('Failure');
         console.dir(data);
-        $scope.errors.finding_products = true;
+        setErrorNotice('Remote trouble. Unable to find products & components.');
         if (callback) callback();
       });
   }
@@ -776,26 +799,44 @@ function BugsController($scope, $timeout, $http) {
     $scope.search_q = '';
     $scope.in_search = false;
   };
+
   $scope.getAuthCookie = function() {
     console.log(this.email, this.password);
-    var params = {
+    /*var params = {
        Bugzilla_login: this.email,
        Bugzilla_password: this.password,
        Bugzilla_remember: 'on',
        GoAheadAndLogIn: 'Log in'
-    }
-    $http.post(BUGZILLA_LOGIN_URL, params)
+    };*/
+    var email = this.email;
+    var params = {login: email, password: this.password};
+
+    fetchAuthToken(params)
       .success(function(data, status, headers, config) {
         console.log(data);
         console.log(status);
-        console.log(headers()['Set-Cookie']);
-        console.dir(config);
+        if (data.token) {
+          $scope.auth_token = data.token;
+          localForage.setItem('auth_token', $scope.auth_token);
+          localForage.setItem('email', email);
+        } else if (data.error) {
+          setErrorNotice(data.message);
+          console.warn('Could not log in');
+          console.log(data);
+        } else {
+          console.warn("Something unexpected");
+          console.dir(data);
+        }
       }).error(function(data, status, headers, config) {
         console.warn('Failure');
         console.dir(data);
         console.log(status);
       });
+  };
 
+  $scope.clearAuthToken = function() {
+    $scope.auth_token = null;
+    localForage.removeItem('auth_token');
   };
 
   $scope.isAssignedTo = function(bug) {
