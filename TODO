@@ -1,8 +1,6 @@
 TODO
 ====
 
-* Auth!
-
 * Combine history with comments
 
 * interval that repeatedly fetches with some last_changed_time filter
@@ -30,3 +28,7 @@ DONE
 * Cache /configuration API (cache the 'all' variable)
 
 * When downloading comments on a bug, it needs to reset the `extract`
+
+* Auth!
+
+* Cache the gravatar calculation because it's slow

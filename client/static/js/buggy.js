@@ -497,14 +497,22 @@ function BugsController($scope, $timeout, $http) {
     return bug.id == $scope.bug.id;
   };
 
+  var _gravatar_cache = {};
   $scope.avatarURL = function(email, size) {
     size = size || 64;
     var secure = document.location.protocol === 'https:';
     if (email === 'mozilla+bugcloser@davedash.com') {
+      // exceptions
       return 'static/images/bugzilla-icon.png';
     }
-    return get_gravatar(email, size, secure);
-    return 'static/images/avatar.png';
+    //return 'static/images/avatar.png'; // debugging
+    var cache_key = email + size + secure;
+    var url = _gravatar_cache[cache_key];
+    if (!url) {
+      url = get_gravatar(email, size, secure);
+      _gravatar_cache[cache_key] = url;
+    }
+    return url;
   };
 
   $scope.isEmail = function(text) {
