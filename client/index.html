@@ -18,10 +18,6 @@
 <body>
 
 
-
-
-
-
 <div class="pure-g-r content" id="layout" ng-controller="BugsController">
     <div class="pure-u" id="nav">
         <a href="#" class="nav-menu-button">Menu</a>
@@ -198,8 +194,10 @@
                 <dd>{{ config_stats.total_bugs }}</dd>
                 <dt># Comments in all bugs ({{ count_bugs_with_comments }} of {{ config_stats.total_bugs }})</dt>
                 <dd>{{ count_total_comments }}</dd>
-                <dt>Data downloaded</dt>
+                <dt>Data downloaded this session</dt>
                 <dd>{{ config_stats.data_downloaded_human }}</dd>
+                <dt>Total Data downloaded</dt>
+                <dd>{{ config_stats.total_data_downloaded_human }}</dd>
               </dl>
             </div>
 
@@ -251,8 +249,13 @@
                        title="Can't wait to see if it's updated remotely?"
                        ><img src="static/images/refresh.png" alt="Refresh"></a>
                     </p>
-                    <!--<button class="pure-button secondary-button">Reply</button>
-                    <button class="pure-button secondary-button">Forward</button>
+                    <button class="pure-button secondary-button" ng-click="toggleShowHistory()" ng-if="!show_history">
+                    Hide History
+                    </button>
+                    <button class="pure-button secondary-button" ng-click="toggleShowHistory()" ng-if="show_history">
+                    Show History
+                    </button>
+                    <!--<button class="pure-button secondary-button">Forward</button>
                     <button class="pure-button secondary-button">Move to</button>-->
                 </div>
 
@@ -277,21 +280,49 @@
             </div>
 
 
-            <div class="email-content-body" ng-repeat="comment in bug.comments">
-               <div class="pure-u" ng-if="isEmail(comment.creator)">
-                        <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(comment.creator) }}"
-                             >
+            <div ng-repeat="thing in bug.things">
+              <div ng-if="thing.comment" class="email-content-body">
+                <div class="pure-u" ng-if="isEmail(thing.comment.creator)">
+                  <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(thing.comment.creator) }}">
+                </div>
+                <div class="pure-u-3-4">
+                  <p class="email-content-subtitle">
+                    By <b>{{ thing.comment.creator }}</b> at
+                    <a href="{{ makeBugzillaLink(bug.id) }}#c{{ $index }}" target="_blank"><span>{{ thing.comment.creation_time }}</span></a>
+                    <br>
+                    <span>{{ displayTimeAgo(thing.comment.creation_time) }}</span>
+                  </p>
+                </div>
+                <pre ng-bind-html="thing.comment.text | linky:'_blank'"></pre>
+              </div>
 
-               </div>
-               <div class="pure-u-3-4">
-               <p class="email-content-subtitle">
-                        By <b>{{ comment.creator }}</b> at
-                        <a href="{{ makeBugzillaLink(bug.id) }}#c{{ $index }}" target="_blank"><span>{{ comment.creation_time }}</span></a>
-                        <br>
-                        <span>{{ displayTimeAgo(comment.creation_time) }}</span>
-               </p>
-               </div>
-             <pre ng-bind-html="comment.text | linky:'_blank'"></pre>
+              <div ng-if="thing.change" ng-class="{hidden: show_history}" class="email-content-body">
+                <div class="pure-u" ng-if="isEmail(thing.change.who)">
+                  <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(thing.change.who) }}">
+                </div>
+                <div class="pure-u-3-4">
+                  <p class="email-content-subtitle">
+                     Change by <b>{{ thing.change.who }}</b> at <span>{{ thing.change.when }}</span><br>
+                     <span>{{ displayTimeAgo(thing.change.when) }}</span>
+                  </p>
+                </div>
+                  <table class="history pure-table pure-table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Field</th>
+                        <th>Removed</th>
+                        <th>Added</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="change in thing.change.changes">
+                      <td>{{ change.field_name }}</td>
+                      <td>{{ change.removed }}</td>
+                      <td>{{ change.added }}</td>
+                    </tr>
+                    </tbody>
+                  </table>
+              </div>
 
             </div>
 

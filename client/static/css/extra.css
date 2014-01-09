@@ -192,3 +192,16 @@
 span.match {
     background-color: #FFFF00;
 }
+
+table.history {
+    margin-top: 8px;
+}
+table.history th, table.history td {
+    padding: 3px 6px;
+}
+table.history th {
+    font-size: 0.8em;
+}
+table.history td {
+    font-size: 0.9em;
+}
