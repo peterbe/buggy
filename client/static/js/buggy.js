@@ -167,7 +167,9 @@ function BugsController($scope, $timeout, $http) {
 
       $scope.config_stats.total_bugs = $scope.bugs.length;
       $scope.config_stats.data_downloaded_human = filesize($scope.data_downloaded);
+      console.log("BEFORE", $scope.count_total_comments);
       countTotalComments();
+      console.log("AFTER", $scope.count_total_comments);
       precalculateProductCounts();
     }
     $scope.in_config = ! $scope.in_config;
@@ -752,10 +754,11 @@ function BugsController($scope, $timeout, $http) {
   function countTotalComments() {
     var total_comments = 0;
     _.each($scope.bugs, function(bug) {
-      if (bug.comments != null) {
+      if (_.isArray(bug.comments)) {
         total_comments += bug.comments.length;
       }
     });
+    console.log('total_comments', total_comments);
     $scope.count_total_comments = total_comments;
   }
 
