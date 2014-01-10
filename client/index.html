@@ -241,22 +241,18 @@
                     </p>
                 </div>
                 <div class="pure-u-1-3 email-content-controls">
+		  <p>
                     <span class="badge badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
                     <span class="badge badge" ng-if="bug.resolution">{{ bug.resolution }}</span>
-
-                    <p>
-                      <a href="#" ng-click="refreshBug(bug)"
-                       title="Can't wait to see if it's updated remotely?"
-                       ><img src="static/images/refresh.png" alt="Refresh"></a>
-                    </p>
+		  </p>
+		    <button class="pure-button secondary-button" ng-click="refreshBug(bug)"
+		      >Refresh Bug</button>
                     <button class="pure-button secondary-button" ng-click="toggleShowHistory()" ng-if="!show_history">
-                    Hide History
+                    Hide History ({{ bug.history.length }})
                     </button>
                     <button class="pure-button secondary-button" ng-click="toggleShowHistory()" ng-if="show_history">
-                    Show History
+                    Show History ({{ bug.history.length }})
                     </button>
-                    <!--<button class="pure-button secondary-button">Forward</button>
-                    <button class="pure-button secondary-button">Move to</button>-->
                 </div>
 
 
