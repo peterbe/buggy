@@ -995,15 +995,17 @@ function BugsController($scope, $timeout, $http, $interval) {
           });
           if (!_products_left) {
             console.log('New bug ids', new_bug_ids);
-            localForage.getItem('bugs', function(value) {
-              if (value != null) {
-                _.each(new_bug_ids, function(id) {
-                  value.push(id);
-                });
-                localForage.setItem('bugs', value);
-              }
-            });
-            downloadSomeComments();
+            if (new_bug_ids.length) {
+              localForage.getItem('bugs', function(value) {
+                if (value != null) {
+                  _.each(new_bug_ids, function(id) {
+                    value.push(id);
+                  });
+                  localForage.setItem('bugs', value);
+                }
+              });
+              downloadSomeComments();
+            }
             if (callback) {
               callback();
             }
