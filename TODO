@@ -1,14 +1,20 @@
 TODO
 ====
 
-* interval that repeatedly fetches with some last_changed_time filter
+* interval that repeatedly fetches updated bugs
 
 * Fancy select-ui2 thing for products and components
+
+* Refactor to use "sub-controllers"
+
+* Use mcote's notes re native REST API and products
+
 
 SOME DAY TODO
 =============
 
 * Refactor so that `bug.things` doesn't get stored when saving a bug
+
 
 DONE
 ====
@@ -37,3 +43,5 @@ DONE
 * Cache the gravatar calculation because it's slow
 
 * Combine history with comments
+
+* interval that repeatedly fetches new bugs

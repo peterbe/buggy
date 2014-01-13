@@ -1,4 +1,4 @@
-/*global: get_gravatar, serializeObject, filesize */
+/*global: get_gravatar, serializeObject, filesize, document */
 
 'use strict';
 
@@ -43,9 +43,9 @@ app.directive('whenScrolled', function() {
   };
 });
 
-BugsController.$inject = ['$scope', '$timeout', '$http'];
+BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
-function BugsController($scope, $timeout, $http) {
+function BugsController($scope, $timeout, $http, $interval) {
 
   $scope.bugs = [];
   $scope.list_limit = 100;
@@ -94,12 +94,15 @@ function BugsController($scope, $timeout, $http) {
   }
 
   /* Used to put a notice loading message on the screen */
+  var original_document_title = document.title;
   $scope.loading = null;
   function startLoading(msg) {
     $scope.loading = {message: msg};
+    document.title = msg;
   }
   function stopLoading() {
     $scope.loading = null;
+    document.title = original_document_title;
   }
 
   $scope.error_notice = null;
@@ -190,7 +193,6 @@ function BugsController($scope, $timeout, $http) {
   $scope.toggleConfig = function() {
     if (!$scope.in_config) {
       // before opening the config pane, preload some stats
-
       $scope.config_stats.total_bugs = $scope.bugs.length;
       $scope.config_stats.data_downloaded_human = filesize($scope.data_downloaded);
       $scope.config_stats.total_data_downloaded_human = filesize($scope.total_data_downloaded);
@@ -240,12 +242,12 @@ function BugsController($scope, $timeout, $http) {
       var params = {
          include_fields: _INCLUDE_FIELDS
       };
-      if (product_combo.split('::').length === 2) {
+      //if (product_combo.split('::').length === 2) {
         params.product = product_combo.split('::')[0].trim();
         params.component = product_combo.split('::')[1].trim();
-      } else {
-        params.product = product_combo.trim();
-      }
+      //} else {
+      //  params.product = product_combo.trim();
+      //}
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           console.log('Success');
@@ -934,4 +936,107 @@ function BugsController($scope, $timeout, $http) {
     localForage.setItem('show_history', $scope.show_history);
   };
 
+  var products_creation_times = {}
+  function getProductsLatestCreationTimes() {
+    var products = {};
+    _.each($scope.bugs, function(bug) {
+      if (!products[bug.product]) products[bug.product] = {};
+      if (!products[bug.product][bug.component]) {
+        products[bug.product][bug.component] = bug.creation_time;
+      }
+      else if (bug.creation_time > products[bug.product][bug.component]) {
+        products[bug.product][bug.component] = bug.creation_time;
+      }
+    });
+    return products;
+  }
+
+  $scope.fetchNewBugs = function() {
+    startLoading('Finding new bugs');
+    fetchNewBugs(function() {
+      stopLoading();
+    });
+  };
+
+  function fetchNewBugs(callback) {
+    products_creation_times = getProductsLatestCreationTimes();
+    console.dir(products_creation_times);
+    var _products_left = $scope.products.length;
+    _.each($scope.products, function(product_combo, index) {
+      var params = {
+         include_fields: _INCLUDE_FIELDS
+      };
+      params.product = product_combo.split('::')[0].trim();
+      params.component = product_combo.split('::')[1].trim();
+      params.creation_time = products_creation_times[params.product][params.component];
+      // but first we need to add 1 second
+      params.creation_time = moment(params.creation_time).add('s', 1).format('YYYY-MM-DDTHH:mm:ssZ');
+      var new_bug_ids = [];
+      fetchBugs(params)
+        .success(function(data, status, headers, config) {
+          console.log('Success');
+          logDataDownloaded(data);
+          _products_left--;
+          _.each(data.bugs, function(bug, index) {
+            // we must check that we don't already have this bug
+            var existing_bug = _.findWhere($scope.bugs, {id: bug.id});
+            if (existing_bug) {
+              bug.comments = existing_bug.comments;
+              bug.extract = existing_bug.extract;
+              bug.history = existing_bug.history;
+            } else {
+              console.log('NEW BUG'); console.dir(bug);
+              bug.unread = true;
+              $scope.bugs.push(bug);
+              _downloaded_comments = 0;
+              new_bug_ids.push(bug.id);
+            }
+            localForage.setItem(bug.id, bug);
+          });
+          if (!_products_left) {
+            console.log('New bug ids', new_bug_ids);
+            localForage.getItem('bugs', function(value) {
+              if (value != null) {
+                _.each(new_bug_ids, function(id) {
+                  value.push(id);
+                });
+                localForage.setItem('bugs', value);
+              }
+            });
+            downloadSomeComments();
+            if (callback) {
+              callback();
+            }
+          }
+        }).error(function(data, status, headers, config) {
+          console.warn('Failure');
+          console.dir(data);
+        });
+
+    });
+
+  }
+
+  var new_bugs_interval;
+  function startFetchNewBugs() {
+    new_bugs_interval = $interval(function() {
+      console.log("FETCH NEW BUGS");
+      fetchNewBugs();
+    }, 10 * 1000);
+  }
+  startFetchNewBugs();
+
+}
+
+
+// for debugging purposes only
+function forgetBug(id) {
+  localForage.removeItem(id, function() {
+    localForage.getItem('bugs', function(v) {
+      v = _.filter(v, function(x) { return x != id; });
+      localForage.setItem('bugs', v, function() {
+        alert("removed " + id);
+      });
+    });
+  });
 }

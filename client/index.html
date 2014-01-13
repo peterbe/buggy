@@ -59,6 +59,7 @@
                     -->
                     <li class="pure-menu-heading">Options</li>
                     <li><a href="#/config" ng-click="toggleConfig()">Config</a></li>
+                    <li><a href="#" ng-click="fetchNewBugs()">Fetch new bugs</a></li>
 
                 </ul>
             </div>
@@ -88,7 +89,6 @@
           </form>
         </div>
         <!-- consider `email-item-selected` -->
-        <!-- consider `email-item-unread` -->
         <div id="list-items" when-scrolled="listScrolled()">
           <div class="email-item pure-g" ng-repeat="bug in bugs | filter:filterBySearch | filter:isFilteredStatus | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
              ng-class="{'email-item-unread': bug.unread, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)">
