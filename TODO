@@ -1,13 +1,15 @@
 TODO
 ====
 
+* Add ability to "Star" bugs
+
 * interval that repeatedly fetches updated bugs
 
 * Fancy select-ui2 thing for products and components
 
 * Refactor to use "sub-controllers"
 
-* Use mcote's notes re native REST API and products
+* Seems `things` doesn't get the right sort order
 
 
 SOME DAY TODO
@@ -15,6 +17,9 @@ SOME DAY TODO
 
 * Refactor so that `bug.things` doesn't get stored when saving a bug
 
+* Figure out why comments don't have the real name but bugs do
+
+* Map emails -> names for comments
 
 DONE
 ====
@@ -45,3 +50,5 @@ DONE
 * Combine history with comments
 
 * interval that repeatedly fetches new bugs
+
+* Use mcote's notes re native REST API and products

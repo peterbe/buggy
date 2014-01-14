@@ -106,7 +106,7 @@
 
 #list-options {
     position: fixed;
-    left: 180px;
+    left: 200px;
     width: 420px;
     top: 0;
     /*box-shadow: 0 0 4px rgba(80,80,80,0.25);*/
@@ -166,10 +166,18 @@
     background-color: #5ABA59;
 }
 .status-VERIFIED, .badge-VERIFIED {
-    background-color: #FFC94C;
+    /*background-color: #FFC94C;*/
+    background-color:#496321;
 }
 .status-CLOSED, .badge-CLOSED {
-    background-color: #999;
+    background-color: rgb(243, 123, 29);
+}
+.status-ASSIGNED_TO {
+    /*background-color: #0e90d2;*/
+    background-color:     #00E2FD;
+}
+.status-STARRED {
+    background-color: rgb(250, 210, 50);
 }
 
 #list .email-item-active {
@@ -204,4 +212,9 @@ table.history th {
 }
 table.history td {
     font-size: 0.9em;
+}
+
+
+.email-content-header, .email-content-body, .email-content-footer {
+    padding: 1em 1em;
 }

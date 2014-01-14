@@ -231,7 +231,9 @@
 
         <div class="email-content" ng-if="!bug.empty && !in_config">
             <div class="email-content-header pure-g">
+
                 <div class="pure-u-2-3">
+                    <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
                     <h2 class="email-content-title">{{ bug.summary }}</h2>
                     <p class="external-url">
                       <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}"
@@ -254,11 +256,8 @@
                     Show History ({{ bug.history.length }})
                     </button>
                 </div>
+<!--
 
-
-                <div class="pure-u" ng-if="bug.creator_detail.email">
-                    <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.creator_detail.email) }}">
-                </div>
                 <div class="pure-u-3-4">
                   <p class="email-content-subtitle">
                         By <b>{{ bug.creator_detail.real_name }}</b> at
@@ -266,13 +265,16 @@
 			last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
                   </p>
                 </div>
+                <div class="pure-u-1-4" ng-if="bug.creator_detail.email">
+                    <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(bug.creator_detail.email) }}">
+                </div>
 
                 <div class="pure-u-3-4" ng-if="isAssignedTo(bug)">
                   <p class="email-content-subtitle">
                         Assigned to <b>{{ bug.assigned_to_detail.real_name }}</b>
                   </p>
                 </div>
-
+-->
             </div>
 
 

@@ -3,7 +3,6 @@
 'use strict';
 
 
-var OLD_BUGZILLA_URL = 'https://api-dev.bugzilla.mozilla.org/1.3/';
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 3;//10;
 
@@ -220,8 +219,8 @@ function BugsController($scope, $timeout, $http, $interval) {
   }
 
   function fetchConfiguration(params) {
-    var url = OLD_BUGZILLA_URL + 'configuration';
-    //url += '?' + serializeObject(params);
+    var url = BUGZILLA_URL + 'product';
+    url += '?' + serializeObject(params);
     console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
@@ -740,7 +739,22 @@ function BugsController($scope, $timeout, $http, $interval) {
   };
 
   $scope.addProduct = function() {
-    $scope.products.push(this.product_choice);
+    if (!this.product_choice) return;
+    if (this.product_choice.search(/ :: /) == -1) {
+      // e.g. "Socorro"
+      var start = this.product_choice + ' :: ';
+      _.each($scope.product_choices, function(e) {
+        if (e.substring(0, start.length) == start) {
+          if (!_.contains($scope.products, e)) {
+            $scope.products.push(e);
+          }
+        }
+      });
+    } else {
+      if (!_.contains($scope.products, this.product_choice)) {
+        $scope.products.push(this.product_choice);
+      }
+    }
     localForage.setItem('products', $scope.products);
     $scope.products_changed = true;
   };
@@ -752,22 +766,34 @@ function BugsController($scope, $timeout, $http, $interval) {
   // this is always called in an aync process
   function _downloadConfiguration() {
     startLoading('Downloading all possible Products & Components');
-    fetchConfiguration()
+    var params = {
+      type: 'accessible',
+      include_fields: 'name,components.name'
+    };
+    fetchConfiguration(params)
       .success(function(data) {
         stopLoading();
         $scope.product_choices = [];
         var all = [];
-        for (var product_name in data.product) {
-          all.push(product_name);
-          for (var component_name in data.product[product_name].component) {
-            all.push(product_name + ' :: ' + component_name);
-          }
-        }
+        _.each(data.products, function(p) {
+          all.push(p.name);
+          _.each(p.components, function(c) {
+            all.push(p.name + ' :: ' + c.name);
+            //all.push({product: p.name, component: c.name});
+          });
+        });
+        //all = _.sortBy(all, function(each) {
+        //  return each.product;
+        //});
+
         all.sort();
+        //console.dir(all);
+
         localForage.setItem('all_product_choices', all, function() {
           var one_day = new Date().getTime() + 60 * 60 * 24 * 1000;
           localForage.setItem('all_product_choices_expires', one_day);
         });
+
         $scope.product_choices = all;
       }).error(function() {
         console.warn('Unable to download configuration');
@@ -960,7 +986,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   function fetchNewBugs(callback) {
     products_creation_times = getProductsLatestCreationTimes();
-    console.dir(products_creation_times);
+    //console.dir(products_creation_times);
     var _products_left = $scope.products.length;
     _.each($scope.products, function(product_combo, index) {
       var params = {
@@ -974,10 +1000,13 @@ function BugsController($scope, $timeout, $http, $interval) {
       var new_bug_ids = [];
       fetchBugs(params)
         .success(function(data, status, headers, config) {
-          console.log('Success');
+          //console.log('Success');
           logDataDownloaded(data);
           _products_left--;
           _.each(data.bugs, function(bug, index) {
+            console.log('COMPARE', products_creation_times[bug.product][bug.component]);
+            console.log('WITH', bug.creation_time);
+
             // we must check that we don't already have this bug
             var existing_bug = _.findWhere($scope.bugs, {id: bug.id});
             if (existing_bug) {
@@ -1022,9 +1051,9 @@ function BugsController($scope, $timeout, $http, $interval) {
   var new_bugs_interval;
   function startFetchNewBugs() {
     new_bugs_interval = $interval(function() {
-      console.log("FETCH NEW BUGS");
+      console.log("Fetch new bugs");
       fetchNewBugs();
-    }, 10 * 1000);
+    }, 20 * 1000);
   }
   startFetchNewBugs();
 
