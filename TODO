@@ -9,8 +9,6 @@ TODO
 
 * Refactor to use "sub-controllers"
 
-* Seems `things` doesn't get the right sort order
-
 
 SOME DAY TODO
 =============
@@ -52,3 +50,5 @@ DONE
 * interval that repeatedly fetches new bugs
 
 * Use mcote's notes re native REST API and products
+
+* Seems `things` doesn't get the right sort order

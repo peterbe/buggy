@@ -549,7 +549,6 @@ function BugsController($scope, $timeout, $http, $interval) {
     $scope.in_config = false; // in case
     bug.empty = false;
     bug.unread = false;
-    //console.dir(bug);
     localForage.setItem('selected_bug', bug.id);
     bug.things = $scope.getThings(bug);
     fetchAndUpdateComments(bug, function() {
@@ -941,7 +940,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     });
     _.each(bug.history, function(change) {
       things.push({
-         time: change.time,
+         time: change.when,
          comment: null,
          change: change,
          attachment: null
@@ -962,8 +961,11 @@ function BugsController($scope, $timeout, $http, $interval) {
     localForage.setItem('show_history', $scope.show_history);
   };
 
-  var products_creation_times = {}
+  var products_creation_times = null;
   function getProductsLatestCreationTimes() {
+    if (products_creation_times != null) {
+      return products_creation_times;
+    }
     var products = {};
     _.each($scope.bugs, function(bug) {
       if (!products[bug.product]) products[bug.product] = {};
@@ -978,7 +980,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   }
 
   $scope.fetchNewBugs = function() {
-    startLoading('Finding new bugs');
+    //startLoading('Finding new bugs');
     fetchNewBugs(function() {
       stopLoading();
     });
@@ -988,6 +990,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     products_creation_times = getProductsLatestCreationTimes();
     //console.dir(products_creation_times);
     var _products_left = $scope.products.length;
+    var new_bug_ids = [];
     _.each($scope.products, function(product_combo, index) {
       var params = {
          include_fields: _INCLUDE_FIELDS
@@ -997,15 +1000,13 @@ function BugsController($scope, $timeout, $http, $interval) {
       params.creation_time = products_creation_times[params.product][params.component];
       // but first we need to add 1 second
       params.creation_time = moment(params.creation_time).add('s', 1).format('YYYY-MM-DDTHH:mm:ssZ');
-      var new_bug_ids = [];
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           //console.log('Success');
           logDataDownloaded(data);
           _products_left--;
           _.each(data.bugs, function(bug, index) {
-            console.log('COMPARE', products_creation_times[bug.product][bug.component]);
-            console.log('WITH', bug.creation_time);
+            products_creation_times[bug.product][bug.component] = bug.creation_time;
 
             // we must check that we don't already have this bug
             var existing_bug = _.findWhere($scope.bugs, {id: bug.id});
@@ -1014,7 +1015,7 @@ function BugsController($scope, $timeout, $http, $interval) {
               bug.extract = existing_bug.extract;
               bug.history = existing_bug.history;
             } else {
-              console.log('NEW BUG'); console.dir(bug);
+              //console.log('NEW BUG'); console.dir(bug);
               bug.unread = true;
               $scope.bugs.push(bug);
               _downloaded_comments = 0;
@@ -1023,7 +1024,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             localForage.setItem(bug.id, bug);
           });
           if (!_products_left) {
-            console.log('New bug ids', new_bug_ids);
+            //console.log('New bug ids', new_bug_ids);
             if (new_bug_ids.length) {
               localForage.getItem('bugs', function(value) {
                 if (value != null) {
