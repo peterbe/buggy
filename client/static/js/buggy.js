@@ -143,13 +143,13 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   $scope.filterBySearch = function(bug) {
     if (!$scope.search_q) return true;
-    if (isAllDigits($scope.search_q)) {
-      return ('' + bug.id).substring(0, $scope.search_q.length) === $scope.search_q;
-    } else {
-      var regex = new RegExp($scope.search_q, 'i');
-      return regex.test(bug.summary);
+    if (isAllDigits($scope.search_q) &&
+        ('' + bug.id).substring(0, $scope.search_q.length) === $scope.search_q
+       ) {
+      return true;
     }
-    return false;
+    var regex = new RegExp($scope.search_q, 'i');
+    return regex.test(bug.summary);
   };
 
   $scope.submitSearch = function() {
@@ -164,7 +164,13 @@ function BugsController($scope, $timeout, $http, $interval) {
   };
 
   $scope.highlightSearch = function(text) {
-    if (!$scope.search_q) return text;
+    if (!$scope.search_q) {
+      if (_.isNumber(text)) return '' + text;
+      return text;
+    } else if (_.isNumber(text)) {
+      // it's a number!
+      text = '' + text;
+    }
     var regex = new RegExp($scope.search_q, 'i');
     _.each(regex.exec(text), function(match) {
       text = text.replace(match, '<span class="match">' + match + '</span>');
@@ -552,6 +558,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     bug.empty = false;
     bug.unread = false;
     bug.is_changed = false;
+    localForage.setItem(bug.id, bug);
     localForage.setItem('selected_bug', bug.id);
     bug.things = $scope.getThings(bug);
     fetchAndUpdateComments(bug, function() {
