@@ -5,8 +5,8 @@
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
-var FETCH_NEW_BUGS_FREQUENCY = 30;//10;
-var FETCH_CHANGED_BUGS_FREQUENCY = 20;
+var FETCH_NEW_BUGS_FREQUENCY = 25;//10;
+var FETCH_CHANGED_BUGS_FREQUENCY = 30;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
@@ -629,7 +629,6 @@ function BugsController($scope, $timeout, $http, $interval) {
             var k = '' + K;
             if (isAllDigits(k)) {
               if (!_.contains(bug_ids, K)) {
-                console.log('Removing', K);
                 localForage.removeItem(K);
               }
             }
@@ -1069,22 +1068,18 @@ function BugsController($scope, $timeout, $http, $interval) {
   startFetchNewBugs();
 
 
-  var products_last_change_times = null;
   function getProductsLatestChangeTimes() {
-    if (products_last_change_times != null) {
-      return products_last_change_times;
-    }
-    var products = {};
+    var p = {};
     _.each($scope.bugs, function(bug) {
-      if (!products[bug.product]) products[bug.product] = {};
-      if (!products[bug.product][bug.component]) {
-        products[bug.product][bug.component] = bug.last_change_time;
+      if (!p[bug.product]) p[bug.product] = {};
+      if (!p[bug.product][bug.component]) {
+        p[bug.product][bug.component] = bug.last_change_time;
       }
-      else if (bug.creation_time > products[bug.product][bug.component]) {
-        products[bug.product][bug.component] = bug.last_change_time;
+      else if (bug.last_change_time > p[bug.product][bug.component]) {
+        p[bug.product][bug.component] = bug.last_change_time;
       }
     });
-    return products;
+    return p;
   }
 
   $scope.fetchNewChanges = function() {
@@ -1094,8 +1089,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     });
   };
   function fetchNewChanges(callback) {
-    products_last_change_times = getProductsLatestChangeTimes();
-    console.dir(products_last_change_times);
+    var last_change_times = getProductsLatestChangeTimes();
     var _products_left = $scope.products.length;
     _.each($scope.products, function(product_combo, index) {
       var params = {
@@ -1103,7 +1097,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       };
       params.product = product_combo.split('::')[0].trim();
       params.component = product_combo.split('::')[1].trim();
-      params.last_change_time = products_last_change_times[params.product][params.component];
+      params.last_change_time = last_change_times[params.product][params.component];
       // but first we need to add 1 second
       params.last_change_time = moment(params.last_change_time).add('s', 1).format('YYYY-MM-DDTHH:mm:ssZ');
       fetchBugs(params)
@@ -1112,8 +1106,7 @@ function BugsController($scope, $timeout, $http, $interval) {
           logDataDownloaded(data);
           _products_left--;
           _.each(data.bugs, function(bug, index) {
-            console.log("CHANGED BUG", bug.id);
-            products_last_change_times[bug.product][bug.component] = bug.last_change_time;
+            //console.log("CHANGED BUG", bug.id);
             var existing_bug = _.findWhere($scope.bugs, {id: bug.id});
             if (existing_bug) {
               bug.comments = existing_bug.comments;
@@ -1121,8 +1114,6 @@ function BugsController($scope, $timeout, $http, $interval) {
               bug.history = existing_bug.history;
               bug.unread = existing_bug.unread;
               bug.is_changed = true;
-              //bug.unread = true;
-              console.log('NEW:', bug.id, bug.last_change_time);
               localForage.setItem(bug.id, bug);
               // replace it
               _.each($scope.bugs, function(old_bug, index) {

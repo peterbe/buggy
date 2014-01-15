@@ -7,6 +7,9 @@ TODO
 
 * Refactor to use "sub-controllers"
 
+* Delay on the search using $scope.$watch
+  http://stackoverflow.com/a/15304977
+
 
 SOME DAY TODO
 =============
