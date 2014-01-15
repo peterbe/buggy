@@ -134,6 +134,10 @@ a {
     border-left: 6px solid #02a3c6;
 }
 
+.email-item-changed {
+    border-left: 6px solid #5ABA59;
+}
+
 /* Email Content Styles */
 .email-content-header, .email-content-body, .email-content-footer {
     padding: 1em 2em;

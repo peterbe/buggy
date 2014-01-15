@@ -3,8 +3,6 @@ TODO
 
 * Add ability to "Star" bugs
 
-* interval that repeatedly fetches updated bugs
-
 * Fancy select-ui2 thing for products and components
 
 * Refactor to use "sub-controllers"
@@ -52,3 +50,5 @@ DONE
 * Use mcote's notes re native REST API and products
 
 * Seems `things` doesn't get the right sort order
+
+* interval that repeatedly fetches updated bugs
