@@ -1,0 +1,32 @@
+{
+  "name": "buggy",
+  "version": "0.0.1",
+  "description": "A client-side wrapper on the bugzilla.mozilla.org REST API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/peterbe/buggy.git"
+  },
+  "keywords": [
+    "bugzilla",
+    "mozilla",
+    "angularjs"
+  ],
+  "author": "peterbe",
+  "license": "MPL2",
+  "gitHead": "400b66a8c420d7c4c34a0f9b99493f30dd521c5d",
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-cssmin": "~0.7.0",
+    "grunt-contrib-jshint": "~0.8.0",
+    "grunt-contrib-uglify": "~0.2.7",
+    "js-beautify": "~1.3.4",
+    "grunt-html-build": "~0.3.1",
+    "grunt-reduce": "~0.1.12",
+    "grunt-usemin": "~2.0.2"
+  }
+}

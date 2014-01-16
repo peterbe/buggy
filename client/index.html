@@ -5,14 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buggy</title>
 
+<!-- build:css foo.css -->
 <link rel="stylesheet" href="static/css/pure-min.css">
 <link rel="stylesheet" href="static/css/email.css">
 <link rel="stylesheet" href="static/css/extra.css">
-
-<!---<script src="http://use.typekit.net/gis6vng.js"></script>
-<script>
-    try { Typekit.load(); } catch (e) {}
-</script>-->
+<!-- endbuild -->
 
 </head>
 <body>
@@ -367,11 +364,15 @@
 <script src="static/js/vendor/underscore-min.js"></script>
 <script src="static/js/vendor/moment.min.js"></script>
 <script src="static/js/vendor/filesize.min.js"></script>
-<script src="static/js/angularForage.js"></script>
+
+<!-- build:js foo.js -->
+<script src="static/js/md5.js"></script>
+<script src="static/js/angularforage.js"></script>
 <script src="static/js/utils.js"></script>
 <script src="static/js/buggy.js"></script>
-<script async src="static/js/vendor/howler.min.js"></script>
+<!-- endbuild -->
 
+<script async src="static/js/vendor/howler.min.js"></script>
 <script>var POP_SOUNDS = ['static/sounds/pop.mp3', 'static/sounds/pop.ogg'];</script>
 
 </body>
