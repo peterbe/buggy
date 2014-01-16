@@ -1177,6 +1177,10 @@ function BugsController($scope, $timeout, $http, $interval) {
                   $scope.bugs[index] = bug;
                 }
               });
+              // if this was the selected bug, change that too
+              if ($scope.bug && $scope.bug.id == bug.id) {
+                $scope.bug = bug;
+              }
               fetchAndUpdateComments(bug);
             }
           });

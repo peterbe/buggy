@@ -202,8 +202,13 @@
                 </div>
             </div>
 
-            <div class="email-content-body">
-             Select a bug in the left-hand column
+            <div class="email-content-body" ng-if="products.length">
+              <p>Select a bug in the left-hand column</p>
+            </div>
+
+            <div class="email-content-body" ng-if="!products.length">
+              <p><b>Welcome!</b></p>
+	      <p>To <b>get started</b> click "Config" in the nav bar and select the products you want to watch.</p>
             </div>
         </div><!-- /empty -->
 
