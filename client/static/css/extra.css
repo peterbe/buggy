@@ -35,18 +35,18 @@
     font-size: 0.9em;
 }
 
-.loading, .errornotice {
+.notice {
+    z-index: 2;
     position: fixed;
-    opacity: 0.8;
+    opacity: 0.9;
     top: 0;
     right: 0;
-}
-.loading {
-    z-index: 2;
-    background-color: #fff;
     border-left: 1px solid #999;
     border-bottom: 1px solid #999;
     border-bottom-left-radius: 6px;
+}
+.loading {
+    background-color: #fff;
     background-image: url(../images/ajax-loader.gif);
     background-repeat: no-repeat;
     background-position: 1% 75%;
@@ -59,11 +59,8 @@
     z-index: 3;
     background-color: #fff;
     color: red;
-    border-left: 1px solid #999;
-    border-bottom: 1px solid #999;
-    border-bottom-left-radius: 6px;
 }
-.errornotice p {
+.errornotice p, .generalnotice p {
     margin: 3px 23px;
     font-weight: bold;
 }

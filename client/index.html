@@ -30,13 +30,6 @@
 
             <div class="pure-menu pure-menu-open">
                 <ul>
-                    <!--
-                    <li><a href="#">Inbox <span class="email-count">(2)</span></a></li>
-                    <li><a href="#">Important</a></li>
-                    <li><a href="#">Sent</a></li>
-                    <li><a href="#">Drafts</a></li>
-                    <li><a href="#">Trash</a></li>
-                    -->
                     <li class="pure-menu-heading">Statuses</li>
                     <li class="label"
                         ><a href="#" ng-class="{active: !selected_statuses.length}"
@@ -58,8 +51,6 @@
 
 		    <li><a href="#" ng-click="refreshBugs()" title="Ignore locally stored data and re-fetches from Bugzilla">Refresh List</a></li>
 		    <li><a href="#" ng-click="reDownloadSomeComments()" title="Impatiently downloads more bug comments in the background">Download More</a></li>
-                    <!--<li><a href="#" ng-click="fetchNewBugs()">Fetch new bugs</a></li>-->
-                    <!--<li><a href="#" ng-click="fetchNewChanges()">Fetch new changes</a></li>-->
 
                 </ul>
             </div>
@@ -311,12 +302,16 @@
         </div><!-- /!empty -->
     </div>
 
-    <div class="loading pure-u ng-hide" ng-show="loading">
+    <div class="notice loading pure-u ng-hide" ng-show="loading">
       <p class="blinking">{{ loading.message }}</p>
     </div>
 
-    <div class="errornotice pure-u ng-hide" ng-show="error_notice">
+    <div class="notice errornotice pure-u ng-hide" ng-show="error_notice">
       <p>{{ error_notice }}</p>
+    </div>
+
+    <div class="notice generalnotice pure-u ng-hide" ng-show="general_notice">
+      <p>{{ general_notice }}</p>
     </div>
 
 </div>

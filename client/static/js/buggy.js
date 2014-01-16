@@ -109,11 +109,21 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.error_notice = null;
   function setErrorNotice(msg, options) {
     options = options || {};
-    var error_delay = options.error_delay || 10;
+    var delay = options.delay || 10;
     $scope.error_notice = msg;
     $timeout(function() {
       $scope.error_notice = null;
-    }, error_delay * 1000);
+    }, delay * 1000);
+  }
+
+  $scope.general_notice = null;
+  function setGeneralNotice(msg, options) {
+    options = options || {};
+    var delay = options.delay || 5;
+    $scope.general_notice = msg;
+    $timeout(function() {
+      $scope.general_notice = null;
+    }, delay * 1000);
   }
 
   $scope.filterByStatus = function(status) {
@@ -179,6 +189,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   }
 
+  /*
   $scope.countByStatus = function(status) {
     if (status === 'ALL') {
       return $scope.bugs.length;
@@ -195,7 +206,33 @@ function BugsController($scope, $timeout, $http, $interval) {
       });
       return count;
     }
+  };*/
+
+  $scope.countByStatus = function(status) {
+    if (status === 'ALL') {
+      return counts_by_status.ALL;;
+    } else if (status === 'ASSIGNED_TO') {
+      return counts_by_status.ASSIGNED_TO;
+    } else {
+      return counts_by_status[status] || 0;
+    }
   };
+
+  var counts_by_status = {};
+  function reCountBugsByStatus(bugs) {
+    console.log('BUGS ARE A CHANGING');
+    counts_by_status['ALL'] = 0;
+    counts_by_status['ASSIGNED_TO'] = 0;
+    _.each(bugs, function(bug) {
+      counts_by_status['ALL']++;
+      if ($scope.email == bug.assigned_to) {
+        counts_by_status['ASSIGNED_TO']++;
+      }
+      counts_by_status[bug.status] = 1 + (counts_by_status[bug.status] || 0);
+    });
+    console.log(counts_by_status);
+  };
+  $scope.$watch('bugs', reCountBugsByStatus);
 
   $scope.toggleConfig = function() {
     if (!$scope.in_config) {
@@ -212,7 +249,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   function fetchAuthToken(params) {
     var url = BUGZILLA_URL + 'login';
     url += '?' + serializeObject(params);
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
 
@@ -222,14 +259,14 @@ function BugsController($scope, $timeout, $http, $interval) {
     }
     var url = BUGZILLA_URL + 'bug';
     url += '?' + serializeObject(params);
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
 
   function fetchConfiguration(params) {
     var url = BUGZILLA_URL + 'product';
     url += '?' + serializeObject(params);
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
 
@@ -326,7 +363,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     }
     var url = BUGZILLA_URL + 'bug/' + id + '/comment';
     url += '?' + serializeObject(params);
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
 
@@ -373,14 +410,14 @@ function BugsController($scope, $timeout, $http, $interval) {
     }
     var url = BUGZILLA_URL + 'bug/' + id + '/history';
     url += '?' + serializeObject(params);
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
 
   function fetchAndUpdateHistory(bug, callback) {
     fetchHistory(bug.id)
       .success(function(data, status, headers, config) {
-        console.log('History Success');
+        //console.log('History Success');
         //console.dir(data.bugs);
         logDataDownloaded(data);
 
@@ -443,6 +480,8 @@ function BugsController($scope, $timeout, $http, $interval) {
             if (!_bugs_left) {
               // count how many bugs we have comments for
               countBugsWithComments();
+              // tally up the bugs by status
+              reCountBugsByStatus($scope.bugs);
               // all getItem calls have called back
               $scope.$apply();
               // start pulling down comments pre-emptively
@@ -461,6 +500,8 @@ function BugsController($scope, $timeout, $http, $interval) {
             stopLoading();
             // count how many bugs we have comments for
             countBugsWithComments();
+            // tally up the bugs by status
+            reCountBugsByStatus($scope.bugs);
             // start pulling down comments pre-emptively
             downloadSomeComments();
             if (callback) callback();
@@ -515,7 +556,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       }, 60 * 1000);
       return;  // we've pre-emptively downloaded too much
     }
-    console.log('Hmm... what to download?', _downloaded_comments);
+    //console.log('Hmm... what to download?', _downloaded_comments);
 
     var _downloading = false;
     // we want to do this to the most recent bugs first
@@ -1043,6 +1084,11 @@ function BugsController($scope, $timeout, $http, $interval) {
                   localForage.setItem('bugs', value);
                 }
               });
+              if (new_bug_ids.length === 1)
+                setGeneralNotice("1 new bug added");
+              else
+                setGeneralNotice(new_bug_ids.length + " new bugs added");
+              reCountBugsByStatus($scope.bugs);
               downloadSomeComments();
             }
             if (callback) {
@@ -1097,9 +1143,18 @@ function BugsController($scope, $timeout, $http, $interval) {
       };
       params.product = product_combo.split('::')[0].trim();
       params.component = product_combo.split('::')[1].trim();
+      if (!last_change_times[params.product]) {
+        _products_left--;
+        return;
+      }
+      if (!last_change_times[params.product][params.component]) {
+        _products_left--;
+        return;
+      }
       params.last_change_time = last_change_times[params.product][params.component];
       // but first we need to add 1 second
       params.last_change_time = moment(params.last_change_time).add('s', 1).format('YYYY-MM-DDTHH:mm:ssZ');
+      var changed_bug_ids = [];
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           //console.log('Success');
@@ -1109,6 +1164,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             //console.log("CHANGED BUG", bug.id);
             var existing_bug = _.findWhere($scope.bugs, {id: bug.id});
             if (existing_bug) {
+              changed_bug_ids.push(bug.id);
               bug.comments = existing_bug.comments;
               bug.extract = existing_bug.extract;
               bug.history = existing_bug.history;
@@ -1125,6 +1181,10 @@ function BugsController($scope, $timeout, $http, $interval) {
             }
           });
           if (!_products_left) {
+            if (changed_bug_ids.length == 1)
+              setGeneralNotice('1 bug updated.');
+            else if (changed_bug_ids.length)
+              setGeneralNotice(changed_bug_ids.length + ' bugs updated.');
             if (callback) {
               callback();
             }
