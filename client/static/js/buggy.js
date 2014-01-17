@@ -51,6 +51,7 @@ app.directive('whenScrolled', function() {
 BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
 function BugsController($scope, $timeout, $http, $interval) {
+  var _inprogress_refreshing = false;
 
   $scope.bugs = [];
   $scope.list_limit = 100;
@@ -705,7 +706,12 @@ function BugsController($scope, $timeout, $http, $interval) {
     });
   }
 
-  $interval(cleanLocalStorage, CLEAN_LOCAL_STORAGE_FREQUENCY * 1000);
+  $interval(function() {
+    if (!_inprogress_refreshing) {
+      L('Runing cleanLocalStorage()');
+      cleanLocalStorage();
+    }
+  }, CLEAN_LOCAL_STORAGE_FREQUENCY * 1000);
 
   $scope.makeBugzillaLink = function(id, comment_index) {
     return 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + id;
@@ -727,9 +733,11 @@ function BugsController($scope, $timeout, $http, $interval) {
     console.log('Start refreshing bugs');
     $scope.products_changed = false;
     startLoading('Refreshing bug list');
+    _inprogress_refreshing = true;
     fetchAndUpdateBugs(function() {
       stopLoading();
       precalculateProductCounts();
+      _inprogress_refreshing = false;
     });
   };
 
@@ -1138,8 +1146,12 @@ function BugsController($scope, $timeout, $http, $interval) {
   var new_bugs_interval;
   function startFetchNewBugs() {
     new_bugs_interval = $interval(function() {
-      console.log("Fetch new bugs");
-      fetchNewBugs();
+      if (!_inprogress_refreshing) {
+        L("Fetch new bugs");
+        fetchNewBugs();
+      } else {
+        L('NOT fetching new bugs (_inprogress_refreshing)');
+      }
     }, FETCH_NEW_BUGS_FREQUENCY * 1000);
   }
   startFetchNewBugs();
@@ -1234,8 +1246,12 @@ function BugsController($scope, $timeout, $http, $interval) {
   var changed_bugs_interval;
   function startFetchNewChanges() {
     changed_bugs_interval = $interval(function() {
-      console.log("Fetch changed bugs");
-      fetchNewChanges();
+      if (!_inprogress_refreshing) {
+        L("Fetch changed bugs");
+        fetchNewChanges();
+      } else {
+        L('NOT fetching new changes (_inprogress_refreshing)');
+      }
     }, FETCH_CHANGED_BUGS_FREQUENCY * 1000);
   }
   startFetchNewChanges();
