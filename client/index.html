@@ -166,6 +166,16 @@
             </div><!-- / auth -->
 
             <div class="email-content-body">
+              <p>
+                Play sounds:
+                <b ng-if="play_sounds">On</b>
+                <b ng-if="!play_sounds">Off</b>
+                <a href="" ng-click="togglePlaySounds()">Toggle</a>
+              </p>
+            </div><!-- / toggle sounds -->
+
+
+            <div class="email-content-body">
               <h2>In Memory</h2>
               <dl>
                 <dt># Bugs in scope</dt>
@@ -332,6 +342,9 @@
 <script src="static/js/angularForage.js"></script>
 <script src="static/js/utils.js"></script>
 <script src="static/js/buggy.js"></script>
+<script async src="static/js/vendor/howler.min.js"></script>
+
+<script>var POP_SOUNDS = ['static/sounds/pop.mp3', 'static/sounds/pop.ogg'];</script>
 
 </body>
 </html>

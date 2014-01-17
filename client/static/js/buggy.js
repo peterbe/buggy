@@ -77,6 +77,10 @@ function BugsController($scope, $timeout, $http, $interval) {
     }
   });
   $scope.products = [];
+  $scope.play_sounds = true;
+  angularForage.getItem($scope, 'play_sounds', function(value) {
+    if (value != null) $scope.play_sounds = value;
+  });
 
   $scope.config_stats = {
      data_downloaded_human: '',
@@ -1099,6 +1103,7 @@ function BugsController($scope, $timeout, $http, $interval) {
                 setGeneralNotice("1 new bug added");
               else
                 setGeneralNotice(new_bug_ids.length + " new bugs added");
+              playNewBugsSound();
               reCountBugsByStatus($scope.bugs);
               downloadSomeComments();
             }
@@ -1219,6 +1224,19 @@ function BugsController($scope, $timeout, $http, $interval) {
     }, FETCH_CHANGED_BUGS_FREQUENCY * 1000);
   }
   startFetchNewChanges();
+
+
+  function playNewBugsSound() {
+    if ($scope.play_sounds) {
+      new Howl({urls: POP_SOUNDS}).play();
+    }
+  }
+
+  $scope.togglePlaySounds = function() {
+    $scope.play_sounds = ! $scope.play_sounds;
+    localForage.setItem('play_sounds', $scope.play_sounds);
+    return false;
+  };
 
 }
 
