@@ -332,8 +332,14 @@ function BugsController($scope, $timeout, $http, $interval) {
 
 
   function fetchAndUpdateBug(bug, callback) {
+    var bug_id;
+    if (_.isNumber(bug)) {
+      bug_id = bug;
+    } else {
+      bug_id = bug.id;
+    }
     fetchBugs({
-       id: bug.id,
+       id: bug_id,
       include_fields: _INCLUDE_FIELDS
     }).success(function(data, status, headers, config) {
       console.log('Success');
@@ -476,6 +482,7 @@ function BugsController($scope, $timeout, $http, $interval) {
               $scope.bugs.push(bug);
             } else {
               console.warn('No bug data on', id);
+              fetchAndUpdateBug(id);
             }
             if (!_bugs_left) {
               // count how many bugs we have comments for
@@ -1062,6 +1069,14 @@ function BugsController($scope, $timeout, $http, $interval) {
       };
       params.product = product_combo.split('::')[0].trim();
       params.component = product_combo.split('::')[1].trim();
+      if (!products_creation_times[params.product]) {
+        _products_left--;
+        return;
+      }
+      if (!products_creation_times[params.product][params.component]) {
+        _products_left--;
+        return;
+      }
       params.creation_time = products_creation_times[params.product][params.component];
       // but first we need to add 1 second
       params.creation_time = moment(params.creation_time).add('s', 1).format('YYYY-MM-DDTHH:mm:ssZ');
