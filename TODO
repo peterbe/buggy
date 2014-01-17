@@ -10,10 +10,6 @@ TODO
 * Delay on the search using $scope.$watch
   http://stackoverflow.com/a/15304977
 
-* Filtering by "Assigned to me" AND Status=NEW should only match bugs
-  that are assigned to me AND Status=NEW
-
-
 
 SOME DAY TODO
 =============
@@ -62,3 +58,6 @@ DONE
 
 * Submitting search when there's only one bug found should select that
   bug
+
+* Filtering by "Assigned to me" AND Status=NEW should only match bugs
+  that are assigned to me AND Status=NEW

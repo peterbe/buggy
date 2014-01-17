@@ -2,11 +2,15 @@
 
 'use strict';
 
+// saves typing
+var L = function() { console.log.apply(console, arguments) };
+var D = function() { console.dir.apply(console, arguments) };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
 var FETCH_NEW_BUGS_FREQUENCY = 100;//25;//10;
-var FETCH_CHANGED_BUGS_FREQUENCY = 200;//30;
+var FETCH_CHANGED_BUGS_FREQUENCY = 90;//30;
+var CLEAN_LOCAL_STORAGE_FREQUENCY = 12;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
@@ -144,11 +148,19 @@ function BugsController($scope, $timeout, $http, $interval) {
   };
 
   $scope.isFilteredStatus = function(bug) {
-    if (!$scope.selected_statuses.length) return true;
-    if ($scope.email && _.contains($scope.selected_statuses, 'ASSIGNED_TO') && $scope.email == bug.assigned_to) {
+    if (!$scope.selected_statuses.length) return true; // ALL is "selected"
+    if (_.contains($scope.selected_statuses, bug.status)) {
+      // a good start
+      if ($scope.email && _.contains($scope.selected_statuses, 'ASSIGNED_TO')) {
+        // has to be
+        return $scope.email == bug.assigned_to;
+      }
       return true;
+    } else if (_.contains($scope.selected_statuses, 'ASSIGNED_TO') && $scope.selected_statuses.length === 1) {
+      // indendent of status, it must be assigned
+      return $scope.email == bug.assigned_to;
     }
-    return _.contains($scope.selected_statuses, bug.status);
+    return false;
   };
 
   $scope.filterBySearch = function(bug) {
@@ -189,24 +201,6 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   }
 
-  /*
-  $scope.countByStatus = function(status) {
-    if (status === 'ALL') {
-      return $scope.bugs.length;
-    } else if (status === 'ASSIGNED_TO') {
-      var count = 0;
-      _.each($scope.bugs, function(bug) {
-        if (bug.assigned_to == $scope.email) count++;
-      });
-      return count;
-    } else {
-      var count = 0;
-      _.each($scope.bugs, function(bug) {
-        if (bug.status === status) count++;
-      });
-      return count;
-    }
-  };*/
 
   $scope.countByStatus = function(status) {
     if (status === 'ALL') {
@@ -220,18 +214,19 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   var counts_by_status = {};
   function reCountBugsByStatus(bugs) {
-    console.log('BUGS ARE A CHANGING');
-    counts_by_status['ALL'] = 0;
-    counts_by_status['ASSIGNED_TO'] = 0;
+    if (!bugs) return;
+    counts_by_status.ALL = bugs.length;
+    counts_by_status.ASSIGNED_TO = 0;
     _.each(bugs, function(bug) {
-      counts_by_status['ALL']++;
       if ($scope.email == bug.assigned_to) {
-        counts_by_status['ASSIGNED_TO']++;
+        counts_by_status.ASSIGNED_TO++;
       }
       counts_by_status[bug.status] = 1 + (counts_by_status[bug.status] || 0);
     });
+    console.log('BUGS ARE A CHANGING');
     console.log(counts_by_status);
   };
+
   $scope.$watch('bugs', reCountBugsByStatus);
 
   $scope.toggleConfig = function() {
@@ -316,6 +311,7 @@ function BugsController($scope, $timeout, $http, $interval) {
                 // all callbacks for all products and bugs have returned
                 console.log("Storing a list of ", bug_ids.length, "bugs");
                 localForage.setItem('bugs', bug_ids);
+                reCountBugsByStatus();
                 $scope.$apply();
                 if (callback) {
                   $scope.$apply(callback);
@@ -662,25 +658,43 @@ function BugsController($scope, $timeout, $http, $interval) {
   function isAllDigits(x) {
     return !x.match(/[^\d]/);
   }
-  $scope.cleanLocalStorage = function(callback) {
+  var more_to_clean = false;
+  $scope.cleanLocalStorage = function() {
+    cleanLocalStorage({max: 200});  // attempt a much larger set
+  };
+
+  function cleanLocalStorage(options, callback) {
+    if (_.isFunction(options)) {
+      callback = options;
+      options = {};
+    } else {
+      options = options || {};
+    }
+    // If we kick off a `localForage.key(...)` for each index
+    // number there's a risk might cause too much stress on the
+    // browser.
+    var MAX = options.max || 30;
     localForage.getItem('bugs', function(bug_ids) {
       localForage.length(function(L) {
-        for (var i=0; i < L; i++) {
-          localForage.key(i, function(K) {
-            var k = '' + K;
-            if (isAllDigits(k)) {
+        _.each(_.sample(_.range(L), MAX), function(idx, count) {
+          localForage.key(idx, function(K) {
+            if (isAllDigits('' + K)) {
               if (!_.contains(bug_ids, K)) {
-                localForage.removeItem(K);
+                localForage.removeItem(K, function() {
+                  console.log("Cleaned up bug", K);
+                });
               }
             }
-            if ((i + 1) === L && callback) {
-              callback();
+            if ((count + 1) === MAX && callback) {
+              $scope.$apply(callback);
             }
           });
-        }
+        });
       });
     });
-  };
+  }
+
+  $interval(cleanLocalStorage, CLEAN_LOCAL_STORAGE_FREQUENCY * 1000);
 
   $scope.makeBugzillaLink = function(id, comment_index) {
     return 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + id;
@@ -761,10 +775,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     });
     localForage.setItem('products', $scope.products);
     $scope.products_changed = true;
-    startLoading("Cleaning up local storage");
-    $scope.cleanLocalStorage(function() {
-      stopLoading();
-    });
+    cleanLocalStorage();
   };
 
   $scope.searchProductsByEmail = function() {
