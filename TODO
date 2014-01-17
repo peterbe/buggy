@@ -10,6 +10,10 @@ TODO
 * Delay on the search using $scope.$watch
   http://stackoverflow.com/a/15304977
 
+* Filtering by "Assigned to me" AND Status=NEW should only match bugs
+  that are assigned to me AND Status=NEW
+
+
 
 SOME DAY TODO
 =============
@@ -55,3 +59,6 @@ DONE
 * Seems `things` doesn't get the right sort order
 
 * interval that repeatedly fetches updated bugs
+
+* Submitting search when there's only one bug found should select that
+  bug
