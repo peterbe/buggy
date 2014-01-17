@@ -77,7 +77,6 @@
 
             <div class="pure-u-5-6">
                 <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
-                <h5 class="email-name">DBG:{{ bug.last_change_time }}</h5>
                 <h4 class="email-subject"><a href="{{ makeBugzillaLink(bug.id) }}" target="_blank" ng-bind-html="highlightSearch(bug.id)"></a>
                 <span ng-bind-html="highlightSearch(bug.summary)"></span></h4>
                 <p class="email-desc">
@@ -258,7 +257,6 @@
                         By <b>{{ bug.creator_detail.real_name }}</b> at
                         <span>{{ bug.creation_time }}</span><br>
 			last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
-                        DBG:{{ bug.last_change_time }}
                   </p>
                   <p class="email-content-subtitle" ng-if="isAssignedTo(bug)">
                         Assigned to <b>{{ bug.assigned_to_detail.real_name }}</b>
