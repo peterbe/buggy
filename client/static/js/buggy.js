@@ -7,9 +7,9 @@ var L = function() { console.log.apply(console, arguments) };
 var D = function() { console.dir.apply(console, arguments) };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
-var MAX_BACKGROUND_DOWNLOADS = 2;//10;
-var FETCH_NEW_BUGS_FREQUENCY = 250;//10;
-var FETCH_CHANGED_BUGS_FREQUENCY = 300;
+var MAX_BACKGROUND_DOWNLOADS = 10;
+var FETCH_NEW_BUGS_FREQUENCY = 25;
+var FETCH_CHANGED_BUGS_FREQUENCY = 30;
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
