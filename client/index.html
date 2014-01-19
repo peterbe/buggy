@@ -26,8 +26,6 @@
             <!--
             <button class="pure-button primary-button">Compose</button>-->
 
-            </p>
-
             <div class="pure-menu pure-menu-open">
                 <ul>
                     <li class="pure-menu-heading">Statuses</li>
@@ -221,7 +219,15 @@
             </div>
         </div><!-- /empty -->
 
-        <div class="email-content" ng-if="!bug.empty && !in_config">
+	<div id="top"></div>
+
+        <div class="email-content" ng-if="!bug.empty && !in_config" scroll="foo">
+	    <div class="scrolling">
+              <p>
+  	        <a href="#bottom" ng-if="!at_bottom">&darr; Bottom</a>
+  	        <a href="#top" ng-if="!at_top">&uarr; Top</a>
+              </p>
+	    </div>
             <div class="email-content-header pure-g">
 
                 <div class="pure-u-2-3">
@@ -311,8 +317,8 @@
               </div>
 
             </div>
-
-        </div><!-- /!empty -->
+            <div id="bottom"></div>
+        </div><!-- /!bug -->
     </div>
 
     <div class="notice loading pure-u ng-hide" ng-show="loading">

@@ -36,7 +36,7 @@
 }
 
 .notice {
-    z-index: 2;
+    z-index: 3;
     position: fixed;
     opacity: 0.9;
     top: 0;
@@ -56,7 +56,7 @@
     margin-left: 45px;
 }
 .errornotice {
-    z-index: 3;
+    z-index: 4;
     background-color: #fff;
     color: red;
 }
@@ -214,4 +214,22 @@ table.history td {
 
 .email-content-header, .email-content-body, .email-content-footer {
     padding: 1em 1em;
+}
+
+
+.scrolling {
+    z-index: 2;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    opacity: 0.9;
+    background-color: #fff;
+    border-left: 1px solid #999;
+    border-top: 1px solid #999;
+    border-top-left-radius: 6px;
+}
+
+.scrolling p {
+    margin: 0.2em 0.4em;
+    font-size: 0.9em;
 }

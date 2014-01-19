@@ -7,9 +7,9 @@ var L = function() { console.log.apply(console, arguments) };
 var D = function() { console.dir.apply(console, arguments) };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
-var MAX_BACKGROUND_DOWNLOADS = 10;
-var FETCH_NEW_BUGS_FREQUENCY = 25;//10;
-var FETCH_CHANGED_BUGS_FREQUENCY = 30;
+var MAX_BACKGROUND_DOWNLOADS = 2;//10;
+var FETCH_NEW_BUGS_FREQUENCY = 250;//10;
+var FETCH_CHANGED_BUGS_FREQUENCY = 300;
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
@@ -48,10 +48,51 @@ app.directive('whenScrolled', function() {
   };
 });
 
+app.directive("scroll", function () {
+  return function(scope, element, attrs) {
+    var raw = element[0];
+    var innerHeight = window.innerHeight;
+    var onScroll = function(e) {
+      //L("Scrolled!");
+      var rect = raw.getBoundingClientRect();
+      if ((rect.top + 50) >= 0) {
+        if (!scope.at_top) {
+          //L('AT TOP');
+          scope.at_top = true;
+          scope.at_bottom = false;
+          scope.$apply();
+        }
+      } else if ((rect.bottom - 50) <= innerHeight) {
+        if (!scope.at_bottom) {
+          //L('AT BOTTOM');
+          scope.at_top = false;
+          scope.at_bottom = true;
+          scope.$apply();
+        }
+      } else {
+        // in the middle
+        if (scope.at_top) {
+          scope.at_top = false;
+          scope.$apply();
+        }
+        if (scope.at_bottom) {
+          scope.at_bottom = false;
+          scope.$apply();
+        }
+      }
+      //L(rect.bottom, innerHeight);
+    };
+    angular.element(window).bind('scroll load', onScroll);
+  };
+});
+
 BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
 function BugsController($scope, $timeout, $http, $interval) {
   var _inprogress_refreshing = false;
+
+  $scope.at_top = true;
+  $scope.at_bottom = false;
 
   $scope.bugs = [];
   $scope.list_limit = 100;
