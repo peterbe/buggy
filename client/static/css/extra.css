@@ -41,12 +41,12 @@
     opacity: 0.9;
     top: 0;
     right: 0;
+    background-color: #fff;
     border-left: 1px solid #999;
     border-bottom: 1px solid #999;
     border-bottom-left-radius: 6px;
 }
 .loading {
-    background-color: #fff;
     background-image: url(../images/ajax-loader.gif);
     background-repeat: no-repeat;
     background-position: 1% 75%;
@@ -60,9 +60,16 @@
     background-color: #fff;
     color: red;
 }
-.errornotice p, .generalnotice p {
+.notice p {
     margin: 3px 23px;
+}
+.errornotice p, .generalnotice p {
     font-weight: bold;
+}
+.offlinenotice {
+    z-index: 1;
+    border-left: 1px solid red;
+    border-bottom: 1px solid red;
 }
 
 .blinking {

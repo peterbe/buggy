@@ -61,3 +61,5 @@ DONE
   that are assigned to me AND Status=NEW
 
 * Refactor to use "sub-controllers"
+
+* Offline indicator

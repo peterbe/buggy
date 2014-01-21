@@ -58,6 +58,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.in_config = false;
   $scope.email = '';
   $scope.auth_token = null;
+  $scope.is_offline = false;
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
   $scope.selected_statuses = [];
   angularForage.getItem($scope, 'selected_statuses', function(value) {
@@ -239,6 +240,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           console.log('Success');
+          $scope.is_offline = false;
           logDataDownloaded(data);
           _products_left--;
           var _bugs_left = data.bugs.length;
@@ -269,8 +271,10 @@ function BugsController($scope, $timeout, $http, $interval) {
             });
           });
         }).error(function(data, status, headers, config) {
-          console.warn('Failure');
-          console.dir(data);
+          console.warn('Failure to fetchBugs');
+          console.log('status', status);
+          if (status === 0) $scope.is_offline = true;
+          //console.dir(data);
         });
     });
   }
@@ -288,6 +292,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       include_fields: _INCLUDE_FIELDS
     }).success(function(data, status, headers, config) {
       console.log('Success');
+      $scope.is_offline = false;
       logDataDownloaded(data);
         //console.dir(data);
       if (data.bugs.length) {
@@ -302,8 +307,10 @@ function BugsController($scope, $timeout, $http, $interval) {
       }
       if (callback) callback();
     }).error(function(data, status, headers, config) {
-      console.warn('Failure to update bug');
-      console.dir(data);
+      console.warn('Failure to fetchBugs');
+      console.log('status', status);
+      if (status === 0) $scope.is_offline = true;
+      //console.dir(data);
     });
   }
 
@@ -322,6 +329,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     fetchComments(bug.id)
       .success(function(data, status, headers, config) {
         //console.log('Comments Success');
+        $scope.is_offline = false;
         logDataDownloaded(data);
         //console.dir(data);
         bug.comments = data.bugs[bug.id].comments;
@@ -338,18 +346,18 @@ function BugsController($scope, $timeout, $http, $interval) {
         localForage.setItem(bug.id, bug);
         if (callback) callback();
       }).error(function(data, status, headers, config) {
-        console.warn("Failure to update bugs' comments");
+        console.warn("Failure to fetchComments");
         if (status === 0) {
-          // timed out, possibly no internet connection
+          $scope.is_offline = true;
         } else {
           setErrorNotice('Remote trouble. Unable to fetch the bug comments.');
         }
-        console.dir(data);
-        console.log('STATUS', status);
-        console.log('HEADERS');
-        console.dir(headers);
-        console.log('CONFIG');
-        console.dir(config);
+        //console.dir(data);
+        console.log('status', status);
+        //console.log('HEADERS');
+        //console.dir(headers);
+        //console.log('CONFIG');
+        //console.dir(config);
         if (callback) callback();
       });
   }
@@ -370,6 +378,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       .success(function(data, status, headers, config) {
         //console.log('History Success');
         //console.dir(data.bugs);
+        $scope.is_offline = false;
         logDataDownloaded(data);
 
         _.each(data.bugs, function(bug_history) {
@@ -386,18 +395,19 @@ function BugsController($scope, $timeout, $http, $interval) {
         localForage.setItem(bug.id, bug);
         if (callback) callback();
       }).error(function(data, status, headers, config) {
-        console.warn("Failure to update bugs' comments");
+        console.warn("Failure to fetchAndUpdateHistory");
         if (status === 0) {
           // timed out, possibly no internet connection
+          $sope.is_offline = true;
         } else {
           setErrorNotice('Remote trouble. Unable to fetch the bug comments.');
         }
-        console.dir(data);
-        console.log('STATUS', status);
-        console.log('HEADERS');
-        console.dir(headers);
-        console.log('CONFIG');
-        console.dir(config);
+        //console.dir(data);
+        console.log('status', status);
+        //console.log('HEADERS');
+        //console.dir(headers);
+        //console.log('CONFIG');
+        //console.dir(config);
         if (callback) callback();
       });
   }
@@ -706,6 +716,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     };
     fetchBugs(params)
       .success(function(data, status, headers, config) {
+        $scope.is_offline = false;
         _.each(data.bugs, function(bug) {
           var combo = bug.product + ' :: ' + bug.component;
           if (!_.contains($scope.products, combo)) {
@@ -714,9 +725,11 @@ function BugsController($scope, $timeout, $http, $interval) {
         });
         if (callback) callback();
       }).error(function(data, status, headers, config) {
-        console.warn('Failure');
-        console.dir(data);
-        setErrorNotice('Remote trouble. Unable to find products & components.');
+        console.warn('Failure to fetchBugs');
+        console.log('status', status);
+        if (status === 0) $scope.is_offline = true;
+        //console.dir(data);
+        //setErrorNotice('Remote trouble. Unable to find products & components.');
         if (callback) callback();
       });
   }
@@ -906,8 +919,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
     fetchAuthToken(params)
       .success(function(data, status, headers, config) {
-        //console.log(data);
-        //console.log(status);
+        $scope.is_offline = false;
         if (data.token) {
           $scope.auth_token = data.token;
           localForage.setItem('auth_token', $scope.auth_token);
@@ -921,9 +933,10 @@ function BugsController($scope, $timeout, $http, $interval) {
           console.dir(data);
         }
       }).error(function(data, status, headers, config) {
-        console.warn('Failure');
-        console.dir(data);
-        console.log(status);
+        console.warn('Failure to fetchAuthToken');
+        if (status === 0) $scope.is_offline = true;
+        //console.dir(data);
+        console.log('status', status);
       });
   };
 
@@ -999,6 +1012,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           //console.log('Success');
+          $scope.is_offline = false;
           logDataDownloaded(data);
           _products_left--;
           _.each(data.bugs, function(bug, index) {
@@ -1043,8 +1057,9 @@ function BugsController($scope, $timeout, $http, $interval) {
             }
           }
         }).error(function(data, status, headers, config) {
-          console.warn('Failure');
-          console.dir(data);
+          console.warn('Failure to fetchBugs');
+          if (status === 0) $scope.is_offline = true;
+          console.log('status', status);
         });
 
     });
@@ -1055,7 +1070,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   function startFetchNewBugs() {
     new_bugs_interval = $interval(function() {
       if (!_inprogress_refreshing) {
-        L("Fetch new bugs");
+        //L("Fetch new bugs");
         fetchNewBugs();
       } else {
         L('NOT fetching new bugs (_inprogress_refreshing)');
@@ -1109,6 +1124,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           //console.log('Success');
+          $scope.is_offline = false;
           logDataDownloaded(data);
           _products_left--;
           _.each(data.bugs, function(bug, index) {
@@ -1145,8 +1161,9 @@ function BugsController($scope, $timeout, $http, $interval) {
             }
           }
         }).error(function(data, status, headers, config) {
-          console.warn('Failure');
-          console.dir(data);
+          console.warn('Failure to fetchNewChanges');
+          if (status === 0) $scope.is_offline = true;
+          console.log('status', status);
         });
     });
   }
@@ -1155,7 +1172,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   function startFetchNewChanges() {
     changed_bugs_interval = $interval(function() {
       if (!_inprogress_refreshing) {
-        L("Fetch changed bugs");
+        //L("Fetch changed bugs");
         fetchNewChanges();
       } else {
         L('NOT fetching new changes (_inprogress_refreshing)');
