@@ -59,8 +59,8 @@
     <div class="pure-u-1" id="list" ng-controller="ListController">
         <div id="list-options">
           <form class="pure-form" id="searchform" ng-submit="submitSearch()">
-            <input type="text" ng-model="search_q" id="search_q" class="pure-input-rounded" placeholder="Search...">
-            <button class="pure-button secondary-button" type="button" ng-if="search_q" ng-click="clearSearch()">Clear</button>
+            <input type="text" ng-model="search_q_primary" id="search_q" class="pure-input-rounded" placeholder="Search...">
+            <button class="pure-button secondary-button" type="button" ng-if="search_q_primary" ng-click="clearSearch()">Clear</button>
           </form>
         </div>
         <!-- consider `email-item-selected` -->

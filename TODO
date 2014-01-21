@@ -5,8 +5,7 @@ TODO
 
 * Fancy select-ui2 thing for products and components
 
-* Delay on the search using $scope.$watch
-  http://stackoverflow.com/a/15304977
+* Ability to post comments
 
 
 SOME DAY TODO
@@ -16,7 +15,8 @@ SOME DAY TODO
 
 * Figure out why comments don't have the real name but bugs do
 
-* Map emails -> names for comments
+* Map emails -> names for comments (find out from Dave Lawrence)
+
 
 DONE
 ====
@@ -63,3 +63,6 @@ DONE
 * Refactor to use "sub-controllers"
 
 * Offline indicator
+
+* Delay on the search using $scope.$watch
+  http://stackoverflow.com/a/15304977

@@ -1207,11 +1207,25 @@ function forgetBug(id) {
 /* ListController
  * For the middle pane where you scroll and search bugs.
  */
-app.controller('ListController', ['$scope', function($scope) {
+app.controller('ListController', ['$scope', '$timeout', function($scope, $timeout) {
 
-  $scope.search_q = '';
+  $scope.search_q_primary = '';  // the model used for dumping to search_q
+  $scope.search_q = '';  // the variable used for filtering
   $scope.in_search = false;
   $scope.list_limit = 100;
+
+  // We don't want to run the expensive filter and highlight too quickly
+  // when the user is typing something in. Instead we add a deliberate
+  // delay so that it only refreshes 300msec after you stop typing
+  var search_q_timeout = null;
+  var search_q_temp = '';
+  $scope.$watch('search_q_primary', function(value) {
+    if (search_q_timeout) $timeout.cancel(search_q_timeout);
+    search_q_temp = value;
+    search_q_timeout = $timeout(function() {
+      $scope.search_q = search_q_temp;
+    }, 400);
+  });
 
   $scope.filterBySearch = function(bug) {
     if (!$scope.search_q) return true;
@@ -1225,6 +1239,9 @@ app.controller('ListController', ['$scope', function($scope) {
   };
 
   $scope.submitSearch = function() {
+    if ($scope.search_q_primary !== $scope.search_q) {
+      $scope.search_q = $scope.search_q_primary;
+    }
     if ($scope.search_q) {
       var found_bugs = _.filter($scope.bugs, $scope.filterBySearch);
       if (found_bugs.length == 1) {
@@ -1252,6 +1269,7 @@ app.controller('ListController', ['$scope', function($scope) {
 
   $scope.clearSearch = function() {
     $scope.search_q = '';
+    $scope.search_q_primary = '';
     $scope.in_search = false;
   };
 
