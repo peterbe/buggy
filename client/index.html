@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <div class="pure-u-1" id="list">
+    <div class="pure-u-1" id="list" ng-controller="ListController">
         <div id="list-options">
           <form class="pure-form" id="searchform" ng-submit="submitSearch()">
             <input type="text" ng-model="search_q" id="search_q" class="pure-input-rounded" placeholder="Search...">
@@ -100,7 +100,7 @@
 
     <div class="pure-u-1" id="main">
 
-        <div ng-if="in_config">
+        <div ng-if="in_config" ng-controller="ConfigController">
             <div class="email-content-header pure-g">
                 <div class="pure-u-2-3">
                     <h1 class="email-content-title">Configuration Options</h1>
@@ -138,7 +138,6 @@
                 <!--<select ui-select2 ng-model="select2" data-placeholder="Find a new component">-->
                 <select ng-model="product_choice" ng-focus="startSelectProducts()" data-placeholder="Find a new component"
                 >
-                 <!--ng-options="product_choices">-->
                   <option ng-repeat="combo in product_choices" value="{{ combo }}">{{ combo }}</option>
                 </select>
                 <button class="pure-button secondary-button">Add</button>
@@ -200,7 +199,7 @@
               </form>
             </div>
 
-        </div>
+        </div><!-- /in_config -->
 
         <div class="email-content" ng-if="bug.empty && !in_config">
             <div class="email-content-header pure-g">
@@ -221,7 +220,7 @@
 
 	<div id="top"></div>
 
-        <div class="email-content" ng-if="!bug.empty && !in_config" scroll="foo">
+        <div class="email-content" ng-if="!bug.empty && !in_config" scrolling ng-controller="BugController">
 	    <div class="scrolling">
               <p>
   	        <a href="#bottom" ng-if="!at_bottom">&darr; Bottom</a>
@@ -270,7 +269,6 @@
                 </div>
 
             </div>
-
 
             <div ng-repeat="thing in bug.things">
               <div ng-if="thing.comment" class="email-content-body">

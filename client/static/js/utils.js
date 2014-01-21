@@ -22,3 +22,9 @@ serializeObject = function(obj) {
     }
   return str.join("&");
 }
+
+
+// so you can find out if something is a bug ID
+function isAllDigits(x) {
+  return !x.match(/[^\d]/);
+}

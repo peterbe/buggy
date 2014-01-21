@@ -5,8 +5,6 @@ TODO
 
 * Fancy select-ui2 thing for products and components
 
-* Refactor to use "sub-controllers"
-
 * Delay on the search using $scope.$watch
   http://stackoverflow.com/a/15304977
 
@@ -61,3 +59,5 @@ DONE
 
 * Filtering by "Assigned to me" AND Status=NEW should only match bugs
   that are assigned to me AND Status=NEW
+
+* Refactor to use "sub-controllers"

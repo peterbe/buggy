@@ -48,56 +48,13 @@ app.directive('whenScrolled', function() {
   };
 });
 
-app.directive("scroll", function () {
-  return function(scope, element, attrs) {
-    var raw = element[0];
-    var innerHeight = window.innerHeight;
-    var onScroll = function(e) {
-      //L("Scrolled!");
-      var rect = raw.getBoundingClientRect();
-      if ((rect.top + 50) >= 0) {
-        if (!scope.at_top) {
-          //L('AT TOP');
-          scope.at_top = true;
-          scope.at_bottom = false;
-          scope.$apply();
-        }
-      } else if ((rect.bottom - 50) <= innerHeight) {
-        if (!scope.at_bottom) {
-          //L('AT BOTTOM');
-          scope.at_top = false;
-          scope.at_bottom = true;
-          scope.$apply();
-        }
-      } else {
-        // in the middle
-        if (scope.at_top) {
-          scope.at_top = false;
-          scope.$apply();
-        }
-        if (scope.at_bottom) {
-          scope.at_bottom = false;
-          scope.$apply();
-        }
-      }
-      //L(rect.bottom, innerHeight);
-    };
-    angular.element(window).bind('scroll load', onScroll);
-  };
-});
 
 BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
 function BugsController($scope, $timeout, $http, $interval) {
   var _inprogress_refreshing = false;
 
-  $scope.at_top = true;
-  $scope.at_bottom = false;
-
   $scope.bugs = [];
-  $scope.list_limit = 100;
-  $scope.search_q = '';
-  $scope.in_search = false;
   $scope.in_config = false;
   $scope.email = '';
   $scope.auth_token = null;
@@ -192,60 +149,6 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.isSelectedStatus = function(status) {
     return _.contains($scope.selected_statuses, status);
   };
-
-  $scope.isFilteredStatus = function(bug) {
-    if (!$scope.selected_statuses.length) return true; // ALL is "selected"
-    if (_.contains($scope.selected_statuses, bug.status)) {
-      // a good start
-      if ($scope.email && _.contains($scope.selected_statuses, 'ASSIGNED_TO')) {
-        // has to be
-        return $scope.email == bug.assigned_to;
-      }
-      return true;
-    } else if (_.contains($scope.selected_statuses, 'ASSIGNED_TO') && $scope.selected_statuses.length === 1) {
-      // indendent of status, it must be assigned
-      return $scope.email == bug.assigned_to;
-    }
-    return false;
-  };
-
-  $scope.filterBySearch = function(bug) {
-    if (!$scope.search_q) return true;
-    if (isAllDigits($scope.search_q) &&
-        ('' + bug.id).substring(0, $scope.search_q.length) === $scope.search_q
-       ) {
-      return true;
-    }
-    var regex = new RegExp($scope.search_q, 'i');
-    return regex.test(bug.summary);
-  };
-
-  $scope.submitSearch = function() {
-    if ($scope.search_q) {
-      var found_bugs = _.filter($scope.bugs, $scope.filterBySearch);
-      if (found_bugs.length == 1) {
-        $scope.bug = found_bugs[0];
-        $scope.search_q = '';
-        $scope.in_search = false;
-      }
-    }
-  };
-
-  $scope.highlightSearch = function(text) {
-    if (!$scope.search_q) {
-      if (_.isNumber(text)) return '' + text;
-      return text;
-    } else if (_.isNumber(text)) {
-      // it's a number!
-      text = '' + text;
-    }
-    var regex = new RegExp($scope.search_q, 'i');
-    _.each(regex.exec(text), function(match) {
-      text = text.replace(match, '<span class="match">' + match + '</span>');
-    });
-    return text;
-
-  }
 
 
   $scope.countByStatus = function(status) {
@@ -672,7 +575,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       // exceptions
       return 'static/images/bugzilla-icon.png';
     }
-    //return 'static/images/avatar.png'; // debugging
+    return 'static/images/avatar.png'; // debugging
     var cache_key = email + size + secure;
     var url = _gravatar_cache[cache_key];
     if (!url) {
@@ -708,9 +611,6 @@ function BugsController($scope, $timeout, $http, $interval) {
    * This happens if you, for example, remove a product that
    * you're no longer interested in.
    */
-  function isAllDigits(x) {
-    return !x.match(/[^\d]/);
-  }
   var more_to_clean = false;
   $scope.cleanLocalStorage = function() {
     cleanLocalStorage({max: 200});  // attempt a much larger set
@@ -756,14 +656,6 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   $scope.makeBugzillaLink = function(id, comment_index) {
     return 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + id;
-  };
-
-  $scope.hasAdditionalComments = function(bug) {
-    return bug.comments != null && bug.comments.length > 1;
-  };
-
-  $scope.countAdditionalComments = function(bug) {
-    return bug.comments.length - 1;
   };
 
   $scope.showFileSize = function(bytes) {
@@ -1008,11 +900,6 @@ function BugsController($scope, $timeout, $http, $interval) {
     $scope.in_search = ! $scope.in_search;
   };
 
-  $scope.clearSearch = function() {
-    $scope.search_q = '';
-    $scope.in_search = false;
-  };
-
   $scope.getAuthCookie = function() {
     var email = this.email;
     var params = {login: email, password: this.password};
@@ -1040,15 +927,6 @@ function BugsController($scope, $timeout, $http, $interval) {
       });
   };
 
-  $scope.clearAuthToken = function() {
-    $scope.auth_token = null;
-    localForage.removeItem('auth_token');
-  };
-
-  $scope.isAssignedTo = function(bug) {
-    return bug.assigned_to && bug.assigned_to != 'nobody@mozilla.org';
-  };
-
   $scope.getThings = function(bug) {
     var things = [];
     _.each(bug.comments, function(comment) {
@@ -1069,17 +947,6 @@ function BugsController($scope, $timeout, $http, $interval) {
     });
     things = _.sortBy(things, 'time');
     return things;
-  };
-
-  $scope.show_history = false;
-  angularForage.getItem($scope, 'show_history', function(value) {
-    if (value != null) {
-      $scope.show_history = value;
-    }
-  });
-  $scope.toggleShowHistory = function() {
-    $scope.show_history = !$scope.show_history;
-    localForage.setItem('show_history', $scope.show_history);
   };
 
   var products_creation_times = null;
@@ -1304,12 +1171,6 @@ function BugsController($scope, $timeout, $http, $interval) {
     }
   }
 
-  $scope.togglePlaySounds = function() {
-    $scope.play_sounds = ! $scope.play_sounds;
-    localForage.setItem('play_sounds', $scope.play_sounds);
-    return false;
-  };
-
 }
 
 
@@ -1324,3 +1185,162 @@ function forgetBug(id) {
     });
   });
 }
+
+
+/* ListController
+ * For the middle pane where you scroll and search bugs.
+ */
+app.controller('ListController', ['$scope', function($scope) {
+
+  $scope.search_q = '';
+  $scope.in_search = false;
+  $scope.list_limit = 100;
+
+  $scope.filterBySearch = function(bug) {
+    if (!$scope.search_q) return true;
+    if (isAllDigits($scope.search_q) &&
+        ('' + bug.id).substring(0, $scope.search_q.length) === $scope.search_q
+       ) {
+      return true;
+    }
+    var regex = new RegExp($scope.search_q, 'i');
+    return regex.test(bug.summary);
+  };
+
+  $scope.submitSearch = function() {
+    if ($scope.search_q) {
+      var found_bugs = _.filter($scope.bugs, $scope.filterBySearch);
+      if (found_bugs.length == 1) {
+        $scope.bug = found_bugs[0];
+        $scope.search_q = '';
+        $scope.in_search = false;
+      }
+    }
+  };
+
+  $scope.highlightSearch = function(text) {
+    if (!$scope.search_q) {
+      if (_.isNumber(text)) return '' + text;
+      return text;
+    } else if (_.isNumber(text)) {
+      // it's a number!
+      text = '' + text;
+    }
+    var regex = new RegExp($scope.search_q, 'i');
+    _.each(regex.exec(text), function(match) {
+      text = text.replace(match, '<span class="match">' + match + '</span>');
+    });
+    return text;
+  }
+
+  $scope.clearSearch = function() {
+    $scope.search_q = '';
+    $scope.in_search = false;
+  };
+
+  $scope.isFilteredStatus = function(bug) {
+    if (!$scope.selected_statuses.length) return true; // ALL is "selected"
+    if (_.contains($scope.selected_statuses, bug.status)) {
+      // a good start
+      if ($scope.email && _.contains($scope.selected_statuses, 'ASSIGNED_TO')) {
+        // has to be
+        return $scope.email == bug.assigned_to;
+      }
+      return true;
+    } else if (_.contains($scope.selected_statuses, 'ASSIGNED_TO') && $scope.selected_statuses.length === 1) {
+      // indendent of status, it must be assigned
+      return $scope.email == bug.assigned_to;
+    }
+    return false;
+  };
+
+
+  $scope.countAdditionalComments = function(bug) {
+    return bug.comments.length - 1;
+  };
+
+  $scope.hasAdditionalComments = function(bug) {
+    return bug.comments != null && bug.comments.length > 1;
+  };
+
+}]);
+
+
+
+app.directive("scrolling", function () {
+  return function(scope, element, attrs) {
+    var raw = element[0];
+    var innerHeight = window.innerHeight;
+    var onScroll = function(e) {
+      //L("Scrolled!");
+      var rect = raw.getBoundingClientRect();
+      if ((rect.top + 50) >= 0) {
+        if (!scope.at_top) {
+          //L('AT TOP');
+          scope.at_top = true;
+          scope.at_bottom = false;
+          scope.$apply();
+        }
+      } else if ((rect.bottom - 50) <= innerHeight) {
+        if (!scope.at_bottom) {
+          //L('AT BOTTOM');
+          scope.at_top = false;
+          scope.at_bottom = true;
+          scope.$apply();
+        }
+      } else {
+        // in the middle
+        if (scope.at_top) {
+          scope.at_top = false;
+          scope.$apply();
+        }
+        if (scope.at_bottom) {
+          scope.at_bottom = false;
+          scope.$apply();
+        }
+      }
+      //L(rect.bottom, innerHeight);
+    };
+    angular.element(window).bind('scroll load', onScroll);
+  };
+});
+
+app.controller('BugController', ['$scope', function($scope) {
+
+  // TODO maybe these should depend on window.location.hash
+  $scope.at_top = true;
+  $scope.at_bottom = false;
+
+  $scope.show_history = false;
+  angularForage.getItem($scope, 'show_history', function(value) {
+    if (value != null) {
+      $scope.show_history = value;
+    }
+  });
+  $scope.toggleShowHistory = function() {
+    $scope.show_history = !$scope.show_history;
+    localForage.setItem('show_history', $scope.show_history);
+  };
+
+  $scope.isAssignedTo = function(bug) {
+    return bug.assigned_to && bug.assigned_to != 'nobody@mozilla.org';
+  };
+
+
+}]);
+
+
+app.controller('ConfigController', ['$scope', function($scope) {
+
+  $scope.clearAuthToken = function() {
+    $scope.auth_token = null;
+    localForage.removeItem('auth_token');
+  };
+
+  $scope.togglePlaySounds = function() {
+    $scope.play_sounds = ! $scope.play_sounds;
+    localForage.setItem('play_sounds', $scope.play_sounds);
+    return false;
+  };
+
+}]);
