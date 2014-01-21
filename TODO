@@ -1,6 +1,8 @@
 TODO
 ====
 
+* Ability to filter by product
+
 * Add ability to "Star" bugs
 
 * Fancy select-ui2 thing for products and components
@@ -66,3 +68,5 @@ DONE
 
 * Delay on the search using $scope.$watch
   http://stackoverflow.com/a/15304977
+
+* About page

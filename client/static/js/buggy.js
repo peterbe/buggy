@@ -56,6 +56,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   $scope.bugs = [];
   $scope.in_config = false;
+  $scope.in_about = false;
   $scope.email = '';
   $scope.auth_token = null;
   $scope.is_offline = false;
@@ -189,6 +190,10 @@ function BugsController($scope, $timeout, $http, $interval) {
       precalculateProductCounts();
     }
     $scope.in_config = ! $scope.in_config;
+  };
+
+  $scope.toggleAbout = function() {
+    $scope.in_about = ! $scope.in_about;
   };
 
   function fetchAuthToken(params) {
