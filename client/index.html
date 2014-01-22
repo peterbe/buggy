@@ -275,7 +275,7 @@
                 </div>
                 <div class="pure-u-3-4">
                   <p class="email-content-subtitle">
-                    By <b>{{ thing.comment.creator }}</b> at
+                    By <b>{{ nameOrEmail(thing.comment.creator) }}</b> at
                     <a href="{{ makeBugzillaLink(bug.id) }}#c{{ $index }}" target="_blank"><span>{{ thing.comment.creation_time }}</span></a>
                     <br>
                     <span>{{ displayTimeAgo(thing.comment.creation_time) }}</span>

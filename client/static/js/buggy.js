@@ -1,6 +1,6 @@
 /* global _, localForage, Howl, console, get_gravatar, serializeObject, filesize, document,
-          POP_SOUNDS, isAllDigits, window, angularForage, angular, alert, moment,
-          setTimeout */
+   POP_SOUNDS, isAllDigits, window, angularForage, angular, alert, moment,
+   setTimeout */
 
 
 
@@ -85,6 +85,13 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.play_sounds = true;
   angularForage.getItem($scope, 'play_sounds', function(value) {
     if (value !== null) $scope.play_sounds = value;
+  });
+
+  $scope.email_to_name = {};
+  angularForage.getItem($scope, 'email_to_name', function(value) {
+    if (value !== null) {
+      $scope.email_to_name = value;
+    }
   });
 
   $scope.config_stats = {
@@ -566,7 +573,15 @@ function BugsController($scope, $timeout, $http, $interval) {
   };
 
   $scope.selectBug = function(bug) {
-    $scope.in_config = false; // in case
+    // Due to a "bug" in the native REST api, we don't the real_name
+    // in the creator of the comment so we make a hash table from all bugs
+    // that have it
+    if (bug.creator_detail && bug.creator_detail.email && bug.creator_detail.real_name) {
+      $scope.email_to_name[bug.creator_detail.email] = bug.creator_detail.real_name;
+      localForage.setItem('email_to_name', $scope.email_to_name);
+    }
+    $scope.in_config = false; // just in case
+    $scope.in_about = false; // just in case
     bug.empty = false;
     bug.unread = false;
     bug.is_changed = false;
@@ -607,6 +622,10 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.isEmail = function(text) {
     if (!text) return false;
     return text.match(/@/) && !text.match(/\s/);
+  };
+
+  $scope.nameOrEmail = function(email) {
+    return $scope.email_to_name[email] || email;
   };
 
   $scope.displayTimeAgo = function(ts) {
@@ -1351,7 +1370,6 @@ app.directive("scrolling", function () {
 
 app.controller('BugController', ['$scope', function($scope) {
 
-  // TODO maybe these should depend on window.location.hash
   $scope.at_top = true;
   $scope.at_bottom = false;
 
