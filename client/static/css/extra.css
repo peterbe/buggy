@@ -123,8 +123,8 @@
 }
 #list-options p {
     margin:5px 20px;
-
 }
+
 
 #list-items {
     margin-top: 34px;
@@ -243,13 +243,21 @@ table.history td {
     font-size: 0.9em;
 }
 
-
 #product-filters {
-    margin: 15px;
-    margin-top: 50px;
+    position: fixed;
+    top: 0;
+    left: 200px;
+    width: 420px;
+    opacity: 0.95;
+    background: #fff;
+    border-bottom: 1px solid #ccc;
+    z-index: 101;
+    margin-top: 35px;
 }
 #product-filters li {
-    margin-top:2px;
+    margin-top: 2px;
+    margin-left: 15px;
+    margin-right: 15px;
 }
 #product-filters li.selected {
     background-color: #ccc;
@@ -263,6 +271,7 @@ table.history td {
 #product-filters li a {
     font-size: 0.9em;
     display: block;
+    width: 80%;
     padding: 3px;
     color: #000;
 }
