@@ -1,10 +1,12 @@
-/*global: get_gravatar, serializeObject, filesize, document */
+/* global _, localForage, Howl, console, get_gravatar, serializeObject, filesize, document,
+          POP_SOUNDS, isAllDigits, window, angularForage, angular, alert, moment,
+          setTimeout */
 
-'use strict';
+
 
 // saves typing
-var L = function() { console.log.apply(console, arguments) };
-var D = function() { console.dir.apply(console, arguments) };
+var L = function() { console.log.apply(console, arguments); };
+var D = function() { console.dir.apply(console, arguments); };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
@@ -28,7 +30,7 @@ var app = angular.module('buggyApp', ['ngSanitize']);
 app.filter('stringArraySort', function() {
   return function(input) {
     return input.sort();
-  }
+  };
 });
 
 app.directive('whenScrolled', function() {
@@ -52,6 +54,8 @@ app.directive('whenScrolled', function() {
 BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
 function BugsController($scope, $timeout, $http, $interval) {
+  'use strict';
+
   var _inprogress_refreshing = false;
 
   $scope.bugs = [];
@@ -63,7 +67,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
   $scope.selected_statuses = [];
   angularForage.getItem($scope, 'selected_statuses', function(value) {
-    if (value != null) {
+    if (value !== null) {
       $scope.selected_statuses = value;
     }
   });
@@ -80,7 +84,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.products = [];
   $scope.play_sounds = true;
   angularForage.getItem($scope, 'play_sounds', function(value) {
-    if (value != null) $scope.play_sounds = value;
+    if (value !== null) $scope.play_sounds = value;
   });
 
   $scope.config_stats = {
@@ -92,7 +96,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.data_downloaded = 0;  // this session
   $scope.total_data_downloaded = 0; // persistent with local storage
   angularForage.getItem($scope, 'total_data_downloaded', function(value) {
-    if (value != null) {
+    if (value !== null) {
       $scope.total_data_downloaded = value;
     }
   });
@@ -155,7 +159,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   $scope.countByStatus = function(status) {
     if (status === 'ALL') {
-      return counts_by_status.ALL;;
+      return counts_by_status.ALL;
     } else if (status === 'ASSIGNED_TO') {
       return counts_by_status.ASSIGNED_TO;
     } else {
@@ -176,7 +180,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     });
     console.log('BUGS ARE A CHANGING');
     console.log(counts_by_status);
-  };
+  }
 
   $scope.$watch('bugs', reCountBugsByStatus);
 
@@ -256,7 +260,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             // update the local storage
             localForage.getItem(bug.id, function(existing_bug) {
               _bugs_left--;
-              if (existing_bug != null) {
+              if (existing_bug !== null) {
                 // we already have it, merge!
                 bug.comments = existing_bug.comments;
                 bug.extract = existing_bug.extract;
@@ -403,7 +407,7 @@ function BugsController($scope, $timeout, $http, $interval) {
         console.warn("Failure to fetchAndUpdateHistory");
         if (status === 0) {
           // timed out, possibly no internet connection
-          $sope.is_offline = true;
+          $scope.is_offline = true;
         } else {
           setErrorNotice('Remote trouble. Unable to fetch the bug comments.');
         }
@@ -419,7 +423,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   function loadProducts() {
     angularForage.getItem($scope, 'products', function(value) {
-      if (value != null && value.length) {
+      if (value !== null && value.length) {
         $scope.products = value;
       }
     });
@@ -431,14 +435,14 @@ function BugsController($scope, $timeout, $http, $interval) {
    * fetch it remotely */
   function loadBugs(callback) {
     localForage.getItem('bugs', function(value) {
-      if (value != null) {
+      if (value !== null) {
         console.log("Found", value.length, "bug ids");
         var _bugs_left = value.length;
         _.each(value, function(id, index) {
           localForage.getItem(id, function(bug) {
             // count down
             _bugs_left--;
-            if (bug != null) {
+            if (bug !== null) {
               $scope.bugs.push(bug);
             } else {
               console.warn('No bug data on', id);
@@ -476,11 +480,11 @@ function BugsController($scope, $timeout, $http, $interval) {
         }
       }
     });
-  };
+  }
 
   // the very first thing to do
   angularForage.getItem($scope, 'products', function(value) {
-    if (value != null) {
+    if (value !== null) {
       console.log("Stored products", value);
       $scope.products = value;
       loadBugs(function() {
@@ -528,7 +532,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     var _downloading = false;
     // we want to do this to the most recent bugs first
     _.each(_.sortBy($scope.bugs, lastChangeTimeSorter).reverse(), function(bug, index) {
-      if (!_downloading && bug.comments == null) {
+      if (!_downloading && bug.comments === null) {
         _downloading = true;
         _downloaded_comments++;
         console.log("FETCH", bug.id);
@@ -611,7 +615,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   $scope.clearLocalStorage = function() {
     localForage.clear(function() {
-      location.reload();
+      document.location.reload();
       //loadBugs();
     });
   };
@@ -834,10 +838,10 @@ function BugsController($scope, $timeout, $http, $interval) {
     if (_downloading_configuration) return;
     _downloading_configuration = true;
     localForage.getItem('all_product_choices', function(all_product_choices) {
-      if (all_product_choices != null) {
+      if (all_product_choices !== null) {
         // promising but how long has it been stored?
         angularForage.getItem($scope, 'all_product_choices_expires', function(expires) {
-          if (expires != null) {
+          if (expires !== null) {
             // very promising
             var now = new Date().getTime();
             if (now < expires) {
@@ -892,10 +896,10 @@ function BugsController($scope, $timeout, $http, $interval) {
   function countBugsWithComments() {
     var count = 0;
     _.each($scope.bugs, function(bug) {
-      if (bug.comments != null) count++;
+      if (bug.comments !== null) count++;
     });
     $scope.count_bugs_with_comments = count;
-  };
+  }
 
   $scope.count_total_comments = 0;
   function countTotalComments() {
@@ -969,7 +973,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   var products_creation_times = null;
   function getProductsLatestCreationTimes() {
-    if (products_creation_times != null) {
+    if (products_creation_times !== null) {
       return products_creation_times;
     }
     var products = {};
@@ -1042,7 +1046,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             //console.log('New bug ids', new_bug_ids);
             if (new_bug_ids.length) {
               localForage.getItem('bugs', function(value) {
-                if (value != null) {
+                if (value !== null) {
                   _.each(new_bug_ids, function(id) {
                     value.push(id);
                   });
@@ -1270,7 +1274,7 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
       text = text.replace(match, '<span class="match">' + match + '</span>');
     });
     return text;
-  }
+  };
 
   $scope.clearSearch = function() {
     $scope.search_q = '';
@@ -1300,7 +1304,7 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
   };
 
   $scope.hasAdditionalComments = function(bug) {
-    return bug.comments != null && bug.comments.length > 1;
+    return bug.comments !== null && bug.comments.length > 1;
   };
 
 }]);
@@ -1353,7 +1357,7 @@ app.controller('BugController', ['$scope', function($scope) {
 
   $scope.show_history = false;
   angularForage.getItem($scope, 'show_history', function(value) {
-    if (value != null) {
+    if (value !== null) {
       $scope.show_history = value;
     }
   });
