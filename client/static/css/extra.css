@@ -198,9 +198,11 @@
     margin: 5px 10px;
 }
 #searchform input[type="text"] {
-    width: 295px;
+    width: 285px;
 }
-
+button.has-filters {
+    font-weight: bold;
+}
 span.match {
     background-color: #FFFF00;
 }
@@ -239,4 +241,28 @@ table.history td {
 .scrolling p {
     margin: 0.2em 0.4em;
     font-size: 0.9em;
+}
+
+
+#product-filters {
+    margin: 15px;
+    margin-top: 50px;
+}
+#product-filters li {
+    margin-top:2px;
+}
+#product-filters li.selected {
+    background-color: #ccc;
+    border-radius: 6px;
+}
+
+#product-filters ul {
+    list-style: none;
+    padding-left: 0px;
+}
+#product-filters li a {
+    font-size: 0.9em;
+    display: block;
+    padding: 3px;
+    color: #000;
 }

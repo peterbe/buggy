@@ -430,7 +430,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   function loadProducts() {
     angularForage.getItem($scope, 'products', function(value) {
-      if (value !== null && value.length) {
+      if (value && value.length) {
         $scope.products = value;
       }
     });
@@ -442,14 +442,14 @@ function BugsController($scope, $timeout, $http, $interval) {
    * fetch it remotely */
   function loadBugs(callback) {
     localForage.getItem('bugs', function(value) {
-      if (value !== null) {
+      if (value) {
         console.log("Found", value.length, "bug ids");
         var _bugs_left = value.length;
         _.each(value, function(id, index) {
           localForage.getItem(id, function(bug) {
             // count down
             _bugs_left--;
-            if (bug !== null) {
+            if (bug) {
               $scope.bugs.push(bug);
             } else {
               console.warn('No bug data on', id);
@@ -491,7 +491,7 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   // the very first thing to do
   angularForage.getItem($scope, 'products', function(value) {
-    if (value !== null) {
+    if (value) {
       console.log("Stored products", value);
       $scope.products = value;
       loadBugs(function() {
@@ -507,6 +507,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             });
           }
         });
+        precalculateProductCounts();
       });
     } else {
       console.warn('No previously stored products');
@@ -609,7 +610,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       // exceptions
       return 'static/images/bugzilla-icon.png';
     }
-    //return 'static/images/avatar.png'; // debugging
+    return 'static/images/avatar.png'; // debugging
     var cache_key = email + size + secure;
     var url = _gravatar_cache[cache_key];
     if (!url) {
@@ -857,10 +858,10 @@ function BugsController($scope, $timeout, $http, $interval) {
     if (_downloading_configuration) return;
     _downloading_configuration = true;
     localForage.getItem('all_product_choices', function(all_product_choices) {
-      if (all_product_choices !== null) {
+      if (all_product_choices) {
         // promising but how long has it been stored?
         angularForage.getItem($scope, 'all_product_choices_expires', function(expires) {
-          if (expires !== null) {
+          if (expires) {
             // very promising
             var now = new Date().getTime();
             if (now < expires) {
@@ -915,7 +916,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   function countBugsWithComments() {
     var count = 0;
     _.each($scope.bugs, function(bug) {
-      if (bug.comments !== null) count++;
+      if (bug.comments && bug.comments.length) count++;
     });
     $scope.count_bugs_with_comments = count;
   }
@@ -1065,7 +1066,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             //console.log('New bug ids', new_bug_ids);
             if (new_bug_ids.length) {
               localForage.getItem('bugs', function(value) {
-                if (value !== null) {
+                if (value) {
                   _.each(new_bug_ids, function(id) {
                     value.push(id);
                   });
@@ -1241,6 +1242,51 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
   $scope.search_q = '';  // the variable used for filtering
   $scope.in_search = false;
   $scope.list_limit = 100;
+  $scope.product_filters = [];
+  angularForage.getItem($scope, 'product_filters', function(value) {
+    if (value) {
+      $scope.product_filters = value;
+    }
+  });
+
+  $scope.show_product_filters = false;
+  $scope.toggleShowProductFilters = function() {
+    if (!$scope.show_product_filters) {
+      // about to open it
+    }
+    $scope.show_product_filters = ! $scope.show_product_filters;
+  };
+
+  /*
+  $scope.$watch('product_filters', function(val) {
+    L('product_filters=', val);
+  });*/
+
+  $scope.filterByProduct = function(product) {
+    if (product === 'ALL') {
+      $scope.product_filters = [];
+      $scope.show_product_filters = false;
+    } else if (_.contains($scope.product_filters, product)) {
+      $scope.product_filters = _.filter($scope.product_filters, function(s) {
+        return s !== product;
+      });
+    } else if ($scope.product_filters.length === $scope.products.length -1) {
+      $scope.product_filters = [];
+    } else {
+      $scope.product_filters.push(product);
+    }
+    localForage.setItem('product_filters', $scope.product_filters);
+  };
+
+  $scope.isSelectedProductFilter = function(product) {
+    return _.contains($scope.product_filters, product);
+  };
+
+  $scope.isFilteredProduct = function(bug) {
+    if (!$scope.product_filters.length) return true; // ALL is "selected"
+    var combo = bug.product + ' :: ' + bug.component;
+    return _.contains($scope.product_filters, combo);
+  };
 
   // We don't want to run the expensive filter and highlight too quickly
   // when the user is typing something in. Instead we add a deliberate
@@ -1323,7 +1369,12 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
   };
 
   $scope.hasAdditionalComments = function(bug) {
-    return bug.comments !== null && bug.comments.length > 1;
+    return bug.comments && bug.comments.length > 1;
+  };
+
+  $scope.toId = function(value) {
+    // convert the string so it can be used as an ID
+    return value.replace(/^[0-9]+/, '').replace(/[^a-z0-9]/gi, '');
   };
 
 }]);
@@ -1375,7 +1426,7 @@ app.controller('BugController', ['$scope', function($scope) {
 
   $scope.show_history = false;
   angularForage.getItem($scope, 'show_history', function(value) {
-    if (value !== null) {
+    if (value) {
       $scope.show_history = value;
     }
   });
@@ -1387,7 +1438,6 @@ app.controller('BugController', ['$scope', function($scope) {
   $scope.isAssignedTo = function(bug) {
     return bug.assigned_to && bug.assigned_to != 'nobody@mozilla.org';
   };
-
 
 }]);
 
