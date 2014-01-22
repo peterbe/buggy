@@ -610,7 +610,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       // exceptions
       return 'static/images/bugzilla-icon.png';
     }
-    return 'static/images/avatar.png'; // debugging
+    //return 'static/images/avatar.png'; // debugging
     var cache_key = email + size + secure;
     var url = _gravatar_cache[cache_key];
     if (!url) {
