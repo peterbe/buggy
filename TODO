@@ -12,6 +12,9 @@ TODO
   (dkl suggests: " if you do include_fields=groups, you just look at
   whether the list for that key has 1 or more entries")
 
+* Support ngAnimate
+  http://docs.angularjs.org/tutorial/step_12
+
 
 SOME DAY TODO
 =============
