@@ -18,8 +18,6 @@ SOME DAY TODO
 
 * Refactor so that `bug.things` doesn't get stored when saving a bug
 
-* Figure out why comments don't have the real name but bugs do
-
 
 DONE
 ====

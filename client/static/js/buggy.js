@@ -165,31 +165,30 @@ function BugsController($scope, $timeout, $http, $interval) {
 
 
   $scope.countByStatus = function(status) {
-    if (status === 'ALL') {
-      return counts_by_status.ALL;
-    } else if (status === 'ASSIGNED_TO') {
-      return counts_by_status.ASSIGNED_TO;
-    } else {
-      return counts_by_status[status] || 0;
-    }
+    return $scope.counts_by_status[status] || 0;
   };
 
-  var counts_by_status = {};
+  $scope.counts_by_status = {UNREAD: 0, ASSIGNED_TO: 0};
   function reCountBugsByStatus(bugs) {
     if (!bugs) return;
-    counts_by_status.ALL = bugs.length;
-    counts_by_status.ASSIGNED_TO = 0;
+    $scope.counts_by_status.ALL = bugs.length;
+    $scope.counts_by_status.ASSIGNED_TO = 0;
+    $scope.counts_by_status.UNREAD = 0;
     _.each(bugs, function(bug) {
       if ($scope.email == bug.assigned_to) {
-        counts_by_status.ASSIGNED_TO++;
+        $scope.counts_by_status.ASSIGNED_TO++;
       }
-      counts_by_status[bug.status] = 1 + (counts_by_status[bug.status] || 0);
+      if (bug.unread) {
+        $scope.counts_by_status.UNREAD++;
+      }
+      $scope.counts_by_status[bug.status] = 1 + ($scope.counts_by_status[bug.status] || 0);
     });
     console.log('BUGS ARE A CHANGING');
-    console.log(counts_by_status);
+    console.log($scope.counts_by_status);
   }
 
-  $scope.$watch('bugs', reCountBugsByStatus);
+  // not sure this works well
+  //$scope.$watch('bugs', reCountBugsByStatus);
 
   $scope.toggleConfig = function() {
     if (!$scope.in_config) {
@@ -480,6 +479,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             countBugsWithComments();
             // tally up the bugs by status
             reCountBugsByStatus($scope.bugs);
+            $scope.$apply();
             // start pulling down comments pre-emptively
             downloadSomeComments();
             if (callback) callback();
@@ -580,6 +580,11 @@ function BugsController($scope, $timeout, $http, $interval) {
     if (bug.creator_detail && bug.creator_detail.email && bug.creator_detail.real_name) {
       $scope.email_to_name[bug.creator_detail.email] = bug.creator_detail.real_name;
       localForage.setItem('email_to_name', $scope.email_to_name);
+    }
+    if (bug.unread) {
+      L('BUg was unread');
+      bug.unread = false;
+      $scope.counts_by_status.UNREAD--;
     }
     $scope.in_config = false; // just in case
     $scope.in_about = false; // just in case
@@ -1220,19 +1225,6 @@ function BugsController($scope, $timeout, $http, $interval) {
 }
 
 
-// for debugging purposes only
-function forgetBug(id) {
-  localForage.removeItem(id, function() {
-    localForage.getItem('bugs', function(v) {
-      v = _.filter(v, function(x) { return x != id; });
-      localForage.setItem('bugs', v, function() {
-        alert("removed " + id);
-      });
-    });
-  });
-}
-
-
 /* ListController
  * For the middle pane where you scroll and search bugs.
  */
@@ -1349,6 +1341,13 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
 
   $scope.isFilteredStatus = function(bug) {
     if (!$scope.selected_statuses.length) return true; // ALL is "selected"
+    if (_.contains($scope.selected_statuses, 'UNREAD')) {
+      if (!bug.unread) {
+        return false;
+      } else if ($scope.selected_statuses.length === 1) {
+        return true;
+      }
+    }
     if (_.contains($scope.selected_statuses, bug.status)) {
       // a good start
       if ($scope.email && _.contains($scope.selected_statuses, 'ASSIGNED_TO')) {
@@ -1456,3 +1455,26 @@ app.controller('ConfigController', ['$scope', function($scope) {
   };
 
 }]);
+
+
+
+
+// for debugging purposes only
+function forgetBug(id) {
+  localForage.removeItem(id, function() {
+    localForage.getItem('bugs', function(v) {
+      v = _.filter(v, function(x) { return x != id; });
+      localForage.setItem('bugs', v, function() {
+        alert("removed " + id);
+      });
+    });
+  });
+}
+function markUnread(id) {
+  localForage.getItem(id, function(bug) {
+    bug.unread = true;
+    localForage.setItem(id, bug, function() {
+      alert('Done! Reload');
+    });
+  });
+}

@@ -177,8 +177,11 @@
     background-color: rgb(243, 123, 29);
 }
 .status-ASSIGNED_TO {
-    /*background-color: #0e90d2;*/
-    background-color:     #00E2FD;
+    background-color:  #00E2FD;
+    background-color: #f9eae5;
+}
+.status-UNREAD {
+    background-color: #02a3c6;
 }
 .status-STARRED {
     background-color: rgb(250, 210, 50);

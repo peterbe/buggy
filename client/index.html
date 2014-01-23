@@ -40,6 +40,11 @@
                           ng-class="{active: isSelectedStatus('ASSIGNED_TO')}"
                           ng-click="filterByStatus('ASSIGNED_TO')"
                           ><span class="status status-ASSIGNED_TO"></span>ASSIGNED TO ME ({{ countByStatus('ASSIGNED_TO') }})</a></li>
+                    <li class="label"
+                        ><a href="#"
+                          ng-class="{active: isSelectedStatus('UNREAD')}"
+                          ng-click="filterByStatus('UNREAD')"
+                          ><span class="status status-UNREAD"></span>UNREAD ({{ counts_by_status.UNREAD }})</a></li>
 
                     <li class="pure-menu-heading">Options</li>
                     <li><a href="#" ng-click="toggleConfig()">Config</a></li>
@@ -62,7 +67,9 @@
             <button class="pure-button secondary-button" type="button" title="Filter by Product &amp; Component"
               ng-if="!search_q_primary"
               ng-click="toggleShowProductFilters()"
-              ng-class="{'has-filters': product_filters.length}">Filter
+              ng-class="{'has-filters': product_filters.length}">
+	    <span ng-if="!show_product_filters">Filter</span>
+	    <span ng-if="show_product_filters">Close</span>
             <span ng-if="product_filters.length">({{ product_filters.length }})</span>
             </button>
           </form>
