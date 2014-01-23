@@ -304,7 +304,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     }
     fetchBugs({
        id: bug_id,
-      include_fields: _INCLUDE_FIELDS
+      include_fields: _INCLUDE_FIELDS + ',groups'
     }).success(function(data, status, headers, config) {
       console.log('Success');
       $scope.is_offline = false;
@@ -314,6 +314,10 @@ function BugsController($scope, $timeout, $http, $interval) {
         var bug = data.bugs[0];
         _.each($scope.bugs, function(old_bug, index) {
           if (old_bug.id === bug.id) {
+            bug.comments = old_bug.comments;
+            bug.extract = old_bug.extract;
+            bug.history = old_bug.history;
+            bug.unread = old_bug.unread;
             $scope.bugs[index] = bug;
           }
         });
@@ -598,6 +602,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       bug.things = $scope.getThings(bug);
       fetchAndUpdateHistory(bug, function() {
         bug.things = $scope.getThings(bug);
+        fetchAndUpdateBug(bug);
       });
     });
     $scope.bug = bug;

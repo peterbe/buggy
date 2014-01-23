@@ -7,11 +7,6 @@ TODO
 
 * Ability to post comments
 
-* Upon selecting a bug and it doing a fetch, add `groups` to the
-  include_fields and use that to deduce if the bug is private
-  (dkl suggests: " if you do include_fields=groups, you just look at
-  whether the list for that key has 1 or more entries")
-
 * Support ngAnimate
   http://docs.angularjs.org/tutorial/step_12
 
@@ -76,3 +71,8 @@ DONE
 * Map emails -> names for comments (find out from Dave Lawrence)
 
 * Ability to filter by product
+
+* Upon selecting a bug and it doing a fetch, add `groups` to the
+  include_fields and use that to deduce if the bug is private
+  (dkl suggests: " if you do include_fields=groups, you just look at
+  whether the list for that key has 1 or more entries")

@@ -278,3 +278,8 @@ table.history td {
     padding: 3px;
     color: #000;
 }
+
+
+#list-items .padlock {
+    float: right;
+}
