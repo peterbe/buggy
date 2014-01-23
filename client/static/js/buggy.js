@@ -741,7 +741,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     return $scope.bugs.length > $scope.list_limit;
   };
 
-  function findProductsByEmail(email, callback) {
+  function findProductsByEmail(email, callback, error_callback) {
     var params = {
       include_fields: 'product,component',
       assigned_to: email,
@@ -764,7 +764,7 @@ function BugsController($scope, $timeout, $http, $interval) {
         if (status === 0) $scope.is_offline = true;
         //console.dir(data);
         //setErrorNotice('Remote trouble. Unable to find products & components.');
-        if (callback) callback();
+        if (error_callback) error_callback();
       });
   }
 
@@ -786,6 +786,9 @@ function BugsController($scope, $timeout, $http, $interval) {
           localForage.setItem('products', $scope.products);
           $scope.products_changed = true;
         }
+      }, function() {
+        // error callback
+        stopLoading();
       });
     }
   };
