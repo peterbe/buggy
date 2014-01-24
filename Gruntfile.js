@@ -60,6 +60,12 @@ module.exports = function(grunt) {
 //      options: {
 //        jshintrc: '.jshintrc'
 //      }
+    },
+    useminPrepare: {
+       html: 'client/index.html'
+    },
+    usemin: {
+       html: 'client/index.html'
     }
   });
 
@@ -67,11 +73,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-cssmin');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-usemin');
 //  grunt.loadNpmTasks('grunt-contrib-nodeunit');
 //  grunt.loadNpmTasks('grunt-contrib-requirejs');
 //  grunt.loadNpmTasks('grunt-contrib-watch');
 //  grunt.registerTask('build', ['cssmin', 'requirejs', 'concat']);
-  grunt.registerTask('build', ['cssmin', 'uglify', 'concat']);
+  //grunt.registerTask('build', ['cssmin', 'uglify', 'concat']);
+  grunt.registerTask('build', ['usemin']);
 //  grunt.registerTask('default', ['jshint', 'build', 'nodeunit']);
   grunt.registerTask('default', ['jshint', 'build']);
 //  grunt.registerTask('travis', ['jshint', 'nodeunit']);
