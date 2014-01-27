@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buggy</title>
 
-<!-- build:css combined.css -->
+<!-- build:css combined.min.css -->
 <link rel="stylesheet" href="static/css/pure-min.css">
 <link rel="stylesheet" href="static/css/email.css">
 <link rel="stylesheet" href="static/css/extra.css">
@@ -382,21 +382,23 @@
 
 
 
+<!-- build:js vendor.min.js -->
 <script src="static/js/vendor/angular.min.js"></script>
 <script src="static/js/vendor/angular-sanitize.min.js"></script>
 <script src="static/js/vendor/localForage.js"></script>
 <script src="static/js/vendor/underscore-min.js"></script>
 <script src="static/js/vendor/moment.min.js"></script>
 <script src="static/js/vendor/filesize.min.js"></script>
+<script src="static/js/vendor/howler.min.js"></script>
+<!-- endbuild -->
 
-<!-- build:js combined.js -->
+<!-- build:js bundle.min.js -->
 <script src="static/js/md5.js"></script>
 <script src="static/js/angularForage.js"></script>
 <script src="static/js/utils.js"></script>
 <script src="static/js/buggy.js"></script>
 <!-- endbuild -->
 
-<script async src="static/js/vendor/howler.min.js"></script>
 <script>var POP_SOUNDS = ['static/sounds/pop.mp3', 'static/sounds/pop.ogg'];</script>
 
 </body>
