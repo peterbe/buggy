@@ -10,8 +10,8 @@ var D = function() { console.dir.apply(console, arguments); };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
-var FETCH_NEW_BUGS_FREQUENCY = 25;
-var FETCH_CHANGED_BUGS_FREQUENCY = 30;
+var FETCH_NEW_BUGS_FREQUENCY = 30;
+var FETCH_CHANGED_BUGS_FREQUENCY = 35;
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
@@ -115,15 +115,12 @@ function BugsController($scope, $timeout, $http, $interval) {
   }
 
   /* Used to put a notice loading message on the screen */
-  var original_document_title = document.title;
   $scope.loading = null;
   function startLoading(msg) {
     $scope.loading = {message: msg};
-    document.title = msg;
   }
   function stopLoading() {
     $scope.loading = null;
-    document.title = original_document_title;
   }
 
   $scope.error_notice = null;
@@ -136,13 +133,16 @@ function BugsController($scope, $timeout, $http, $interval) {
     }, delay * 1000);
   }
 
+  var original_document_title = document.title;
   $scope.general_notice = null;
   function setGeneralNotice(msg, options) {
     options = options || {};
     var delay = options.delay || 5;
     $scope.general_notice = msg;
+    document.title = msg;
     $timeout(function() {
       $scope.general_notice = null;
+      document.title = original_document_title;
     }, delay * 1000);
   }
 
@@ -254,7 +254,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       //}
       fetchBugs(params)
         .success(function(data, status, headers, config) {
-          console.log('Success');
+          //console.log('Success');
           $scope.is_offline = false;
           logDataDownloaded(data);
           _products_left--;
@@ -306,7 +306,7 @@ function BugsController($scope, $timeout, $http, $interval) {
        id: bug_id,
       include_fields: _INCLUDE_FIELDS + ',groups'
     }).success(function(data, status, headers, config) {
-      console.log('Success');
+      //console.log('Success');
       $scope.is_offline = false;
       logDataDownloaded(data);
         //console.dir(data);
@@ -1074,6 +1074,7 @@ function BugsController($scope, $timeout, $http, $interval) {
               new_bug_ids.push(bug.id);
             }
             localForage.setItem(bug.id, bug);
+            fetchAndUpdateComments(bug);
           });
           if (!_products_left) {
             //console.log('New bug ids', new_bug_ids);
