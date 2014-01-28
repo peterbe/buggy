@@ -1,6 +1,6 @@
 /* global _, localForage, Howl, console, get_gravatar, serializeObject, filesize, document,
    POP_SOUNDS, isAllDigits, window, angularForage, angular, alert, moment,
-   setTimeout */
+   setTimeout, showCloakDialog, closeCloakDialog */
 
 
 
@@ -498,6 +498,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     if (value) {
       console.log("Stored products", value);
       $scope.products = value;
+      showCloakDialog('Loading bugs from local storage...');
       loadBugs(function() {
         localForage.getItem('selected_bug', function(id) {
           if (id) {
@@ -512,9 +513,11 @@ function BugsController($scope, $timeout, $http, $interval) {
           }
         });
         precalculateProductCounts();
+        closeCloakDialog();
       });
     } else {
       console.warn('No previously stored products');
+      closeCloakDialog();
     }
 
   });

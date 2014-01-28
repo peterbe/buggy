@@ -80,3 +80,5 @@ DONE
   include_fields and use that to deduce if the bug is private
   (dkl suggests: " if you do include_fields=groups, you just look at
   whether the list for that key has 1 or more entries")
+
+* Loading dialog

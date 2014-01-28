@@ -6,7 +6,8 @@
     <title>Buggy</title>
 
 <!-- build:css combined.min.css -->
-<link rel="stylesheet" href="static/css/pure-min.css">
+<link rel="stylesheet" href="static/css/vendor/dialog-polyfill.css">
+<link rel="stylesheet" href="static/css/vendor/pure-min.css">
 <link rel="stylesheet" href="static/css/email.css">
 <link rel="stylesheet" href="static/css/extra.css">
 <!-- endbuild -->
@@ -381,6 +382,13 @@
 </div>
 
 
+<dialog>
+  <span class="blinking">Loading</span>
+</dialog>
+
+
+<script src="static/js/vendor/dialog-polyfill.js"></script>
+<script src="static/js/cloak-dialog.js"></script>
 
 <!-- build:js vendor.min.js -->
 <script src="static/js/vendor/angular.min.js"></script>
