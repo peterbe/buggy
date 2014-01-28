@@ -198,6 +198,8 @@ function BugsController($scope, $timeout, $http, $interval) {
       $scope.config_stats.total_data_downloaded_human = filesize($scope.total_data_downloaded);
       countTotalComments();
       precalculateProductCounts();
+      // download all selectable products if not already done so
+      startSelectProducts();
     }
     $scope.in_config = ! $scope.in_config;
   };
@@ -870,7 +872,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       });
   }
 
-  $scope.startSelectProducts = function() {
+  function startSelectProducts() {
     if (_downloading_configuration) return;
     _downloading_configuration = true;
     localForage.getItem('all_product_choices', function(all_product_choices) {
@@ -895,8 +897,7 @@ function BugsController($scope, $timeout, $http, $interval) {
         _downloadConfiguration();
       }
     });
-
-  };
+  }
 
   var products_counts = {};
   $scope.countBugsByProduct = function(product_combo) {
@@ -1464,6 +1465,33 @@ app.controller('ConfigController', ['$scope', function($scope) {
     $scope.play_sounds = ! $scope.play_sounds;
     localForage.setItem('play_sounds', $scope.play_sounds);
     return false;
+  };
+
+  function escapeRegExp(string){
+    return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+  }
+  $scope.searching_products = false;
+  $scope.search_products = '';
+  $scope.isFoundProductChoice = function(combo) {
+    if (!$scope.search_products.length) return true;
+    var found_match = true;
+    _.each($scope.search_products.trim().split(' '), function(part) {
+      if (combo.match(new RegExp('\\b' + escapeRegExp(part), 'i')) === null) {
+        found_match = false;
+      }
+    });
+    return found_match;
+  };
+
+  $scope.highlightProductSearch = function(text) {
+    if (!$scope.search_products) return text;
+    _.each($scope.search_products.trim().split(' '), function(part) {
+      var regex = new RegExp('\\b' + escapeRegExp(part), 'i');
+      _.each(regex.exec(text), function(match) {
+        text = text.replace(match, '<span class="match">' + match + '</span>');
+      });
+    });
+    return text;
   };
 
 }]);

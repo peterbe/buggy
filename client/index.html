@@ -157,10 +157,10 @@
               </p>
               <form class="pure-form" ng-submit="addProduct()">
                 <p>Select new Product &amp; Component</p>
-                <!--<select ui-select2 ng-model="select2" data-placeholder="Find a new component">-->
-                <select ng-model="product_choice" ng-focus="startSelectProducts()" data-placeholder="Find a new component"
-                >
-                  <option ng-repeat="combo in product_choices" value="{{ combo }}">{{ combo }}</option>
+                <input ng-model="search_products" type="text" placeholder="Search" class="pure-input-rounded"><br>
+                <select ng-model="product_choice" multiple>
+                  <option ng-repeat="combo in product_choices | filter:isFoundProductChoice" value="{{ combo }}"
+                  ng-bind-html="highlightProductSearch(combo)"></option>
                 </select>
                 <button class="pure-button secondary-button">Add</button>
 
