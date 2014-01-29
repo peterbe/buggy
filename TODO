@@ -7,13 +7,13 @@ TODO
 
 * Add ability to "Star" bugs
 
-* Fancy select-ui2 thing for products and components
-
 * Ability to post comments
 
 * Support ngAnimate
   http://docs.angularjs.org/tutorial/step_12
 
+* Being able to add bugs outside chosen products as "misc" bugs
+  This might need an interface, like "Find bugs you've reported"
 
 SOME DAY TODO
 =============
@@ -82,3 +82,5 @@ DONE
   whether the list for that key has 1 or more entries")
 
 * Loading dialog
+
+* Upgrade to latest angularjs
