@@ -549,7 +549,7 @@ function BugsController($scope, $timeout, $http, $interval) {
     var _downloading = false;
     // we want to do this to the most recent bugs first
     _.each(_.sortBy($scope.bugs, lastChangeTimeSorter).reverse(), function(bug, index) {
-      if (!_downloading && bug.comments === null) {
+      if (!_downloading && !bug.comments) {
         _downloading = true;
         _downloaded_comments++;
         console.log("FETCH", bug.id);
