@@ -3,8 +3,6 @@ TODO
 
 * New bugs don't seem to get updated with comments
 
-* Display attachments
-
 * Add ability to "Star" bugs
 
 * Ability to post comments
@@ -20,6 +18,9 @@ SOME DAY TODO
 
 * Refactor so that `bug.things` doesn't get stored when saving a bug
 
+* Retroactively, for all attachments that are image/* content types,
+  download them separately and use http://stackoverflow.com/a/3223466
+  to resize them into thumbnails.
 
 DONE
 ====
@@ -86,3 +87,5 @@ DONE
 * Upgrade to latest angularjs
 
 * Filter by changed bugs (like you can with unread)
+
+* Display attachments

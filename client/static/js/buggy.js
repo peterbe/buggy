@@ -16,6 +16,7 @@ var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
+var _ATTACHMENT_INCLUDE_FIELDS = 'id,summary,size,content_type,is_obsolete,creation_time,is_patch';
 // utils stuff
 function makeCommentExtract(comment, max_length) {
   max_length = max_length || 75;
@@ -395,6 +396,17 @@ function BugsController($scope, $timeout, $http, $interval) {
     return $http.get(url);
   }
 
+  function fetchAttachments(id, params) {
+    params = params || {};
+    if ($scope.auth_token) {
+      params.token = $scope.auth_token;
+    }
+    var url = BUGZILLA_URL + 'bug/' + id + '/attachment';
+    url += '?' + serializeObject(params);
+    console.log("BUGZILLA URL", url);
+    return $http.get(url);
+  }
+
   function fetchAndUpdateHistory(bug, callback) {
     fetchHistory(bug.id)
       .success(function(data, status, headers, config) {
@@ -431,6 +443,28 @@ function BugsController($scope, $timeout, $http, $interval) {
         //console.log('CONFIG');
         //console.dir(config);
         if (callback) callback();
+      });
+  }
+
+  function fetchAndUpdateAttachments(bug, callback) {
+    fetchAttachments(bug.id, {include_fields: _ATTACHMENT_INCLUDE_FIELDS})
+      .success(function(data, status, headers) {
+        $scope.is_offline = false;
+        logDataDownloaded(data);
+        // we can't just copy the attachment onto the bug and save it because
+        // it's potentially too large
+        var attachments = [];
+        _.each(data.bugs[bug.id], function(attachment) {
+          if (attachment.is_obsolete) return;
+          attachments.push(attachment);
+        });
+        if (attachments.length) {
+          bug.attachments = attachments;
+          localForage.setItem(bug.id, bug);
+        }
+        if (callback) callback();
+      }).error(function(data, status) {
+        if (status === 0) $scope.is_offline = true;
       });
   }
 
@@ -612,6 +646,9 @@ function BugsController($scope, $timeout, $http, $interval) {
       fetchAndUpdateHistory(bug, function() {
         bug.things = $scope.getThings(bug);
         fetchAndUpdateBug(bug);
+        fetchAndUpdateAttachments(bug, function() {
+          bug.things = $scope.getThings(bug);
+        });
       });
     });
     $scope.bug = bug;
@@ -716,6 +753,14 @@ function BugsController($scope, $timeout, $http, $interval) {
     return 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + id;
   };
 
+  $scope.makeBugzillaAttachmentLink = function(id) {
+    return 'https://bugzilla.mozilla.org/attachment.cgi?id=' + id;
+  };
+
+  $scope.makeBugzillaAttachmentReviewLink = function(bug_id, attachment_id) {
+     return 'https://bugzilla.mozilla.org/page.cgi?id=splinter.html&bug=' + bug_id + '&attachment=' + attachment_id;
+  };
+
   $scope.showFileSize = function(bytes) {
     return filesize(bytes);
   };
@@ -816,23 +861,27 @@ function BugsController($scope, $timeout, $http, $interval) {
 
   $scope.addProduct = function() {
     if (!this.product_choice) return;
-    if (this.product_choice.search(/ :: /) == -1) {
-      // e.g. "Socorro"
-      var start = this.product_choice + ' :: ';
-      _.each($scope.product_choices, function(e) {
-        if (e.substring(0, start.length) == start) {
-          if (!_.contains($scope.products, e)) {
-            $scope.products.push(e);
+    _.each(this.product_choice, function(product_choice) {
+      console.log("PRODUCT_CHOICE", product_choice);
+      if (product_choice.search(/ :: /) == -1) {
+        // e.g. "Socorro"
+        var start = product_choice + ' :: ';
+        _.each($scope.product_choices, function(e) {
+          if (e.substring(0, start.length) == start) {
+            if (!_.contains($scope.products, e)) {
+              $scope.products.push(e);
+            }
           }
+        });
+      } else {
+        if (!_.contains($scope.products, product_choice)) {
+          $scope.products.push(product_choice);
         }
-      });
-    } else {
-      if (!_.contains($scope.products, this.product_choice)) {
-        $scope.products.push(this.product_choice);
       }
-    }
+    });
     localForage.setItem('products', $scope.products);
     $scope.products_changed = true;
+    $scope.search_products = '';
   };
 
   var _downloading_configuration = false;  // used to prevent onFocus on fire repeatedly
@@ -1008,6 +1057,15 @@ function BugsController($scope, $timeout, $http, $interval) {
          attachment: null
       });
     });
+    _.each(bug.attachments || [], function(attachment) {
+      things.push({
+         time: attachment.creation_time,
+         comment: null,
+         change: null,
+         attachment: attachment
+      });
+    });
+
     things = _.sortBy(things, 'time');
     return things;
   };

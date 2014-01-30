@@ -142,9 +142,10 @@ a {
 .email-content-header, .email-content-body, .email-content-footer {
     padding: 1em 2em;
 }
+    /*
     .email-content-header {
         border-bottom: 1px solid #ddd;
-    }
+    }*/
 
         .email-content-title {
             margin: 0.5em 0 0;

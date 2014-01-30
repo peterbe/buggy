@@ -325,25 +325,41 @@
                      <span>{{ displayTimeAgo(thing.change.when) }}</span>
                   </p>
                 </div>
-                  <table class="history pure-table pure-table-bordered">
-                    <thead>
-                      <tr>
-                        <th>Field</th>
-                        <th>Removed</th>
-                        <th>Added</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                <table class="history pure-table pure-table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Removed</th>
+                      <th>Added</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     <tr ng-repeat="change in thing.change.changes">
                       <td>{{ change.field_name }}</td>
                       <td>{{ change.removed }}</td>
                       <td>{{ change.added }}</td>
                     </tr>
-                    </tbody>
-                  </table>
+                  </tbody>
+                </table>
               </div>
 
-            </div>
+              <div ng-if="thing.attachment" class="email-content-body">
+                <p>
+                  <a href="{{ makeBugzillaAttachmentLink(thing.attachment.id) }}" target="_blank">{{ thing.attachment.summary }}</a>
+                  <span ng-if="thing.attachment.is_patch">
+                  (<a href="{{ makeBugzillaAttachmentLink(thing.attachment.id) }}&amp;action=edit" target="_blank">Details</a>,
+                   <a href="{{ makeBugzillaAttachmentLink(thing.attachment.id) }}&amp;action=diff" target="_blank">Diff</a>,
+                   <a href="{{ makeBugzillaAttachmentReviewLink(bug.id, thing.attachment.id) }}" target="_blank">Review</a>)
+                  </span>
+                  <span ng-if="!thing.attachment.is_patch">
+                  (<a href="{{ makeBugzillaAttachmentLink(thing.attachment.id) }}&amp;action=edit" target="_blank">Details</a>)
+                  </span>
+                  <br>
+                  {{ showFileSize(thing.attachment.size) }} ({{ thing.attachment.content_type }})
+                </p>
+              </div>
+
+            </div><!-- /repeat bug.things -->
             <div id="bottom"></div>
         </div><!-- /!bug -->
 
