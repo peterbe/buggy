@@ -171,10 +171,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.counts_by_status = {UNREAD: 0, ASSIGNED_TO: 0, CHANGED: 0};
   function reCountBugsByStatus(bugs) {
     if (!bugs) return;
-    $scope.counts_by_status.ALL = bugs.length;
-    $scope.counts_by_status.ASSIGNED_TO = 0;
-    $scope.counts_by_status.UNREAD = 0;
-    $scope.counts_by_status.CHANGED = 0;
+    $scope.counts_by_status = {UNREAD: 0, ASSIGNED_TO: 0, CHANGED: 0, ALL: bugs.length};
     _.each(bugs, function(bug) {
       if ($scope.email == bug.assigned_to) {
         $scope.counts_by_status.ASSIGNED_TO++;
@@ -187,8 +184,8 @@ function BugsController($scope, $timeout, $http, $interval) {
       }
       $scope.counts_by_status[bug.status] = 1 + ($scope.counts_by_status[bug.status] || 0);
     });
-    console.log('BUGS ARE A CHANGING');
-    console.log($scope.counts_by_status);
+    //console.log('BUGS ARE A CHANGING');
+    //console.log($scope.counts_by_status);
   }
 
   // not sure this works well
