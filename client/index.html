@@ -99,7 +99,7 @@
             <div class="pure-u">
                 <img class="email-avatar" alt="Avatar" height="32" width="32" ng-if="isEmail(bug.creator)" ng-src="{{ avatarURL(bug.creator) }}">
                 <br><br>
-                <abbr style="margin-left:10px" class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</abbr>
+		<span style="margin-left:10px" class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</span>
             </div>
 
             <div class="pure-u-5-6">

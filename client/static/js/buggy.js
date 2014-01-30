@@ -1232,7 +1232,6 @@ function BugsController($scope, $timeout, $http, $interval) {
   }
   startFetchNewChanges();
 
-
   function playNewBugsSound() {
     if ($scope.play_sounds) {
       new Howl({urls: POP_SOUNDS}).play();
