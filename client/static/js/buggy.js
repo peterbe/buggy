@@ -1358,6 +1358,11 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
 
   $scope.isFilteredStatus = function(bug) {
     if (!$scope.selected_statuses.length) return true; // ALL is "selected"
+    if (_.contains($scope.selected_statuses, 'CHANGED') && _.contains($scope.selected_statuses, 'CHANGED')) {
+      if (bug.is_changed || bug.unread) {
+        return true;
+      }
+    }
     if (_.contains($scope.selected_statuses, 'CHANGED')) {
       if (!bug.is_changed) {
         return false;
