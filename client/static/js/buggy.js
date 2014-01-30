@@ -137,7 +137,7 @@ function BugsController($scope, $timeout, $http, $interval) {
   $scope.general_notice = null;
   function setGeneralNotice(msg, options) {
     options = options || {};
-    var delay = options.delay || 5;
+    var delay = options.delay || 10;
     $scope.general_notice = msg;
     document.title = msg;
     $timeout(function() {
@@ -168,18 +168,22 @@ function BugsController($scope, $timeout, $http, $interval) {
     return $scope.counts_by_status[status] || 0;
   };
 
-  $scope.counts_by_status = {UNREAD: 0, ASSIGNED_TO: 0};
+  $scope.counts_by_status = {UNREAD: 0, ASSIGNED_TO: 0, CHANGED: 0};
   function reCountBugsByStatus(bugs) {
     if (!bugs) return;
     $scope.counts_by_status.ALL = bugs.length;
     $scope.counts_by_status.ASSIGNED_TO = 0;
     $scope.counts_by_status.UNREAD = 0;
+    $scope.counts_by_status.CHANGED = 0;
     _.each(bugs, function(bug) {
       if ($scope.email == bug.assigned_to) {
         $scope.counts_by_status.ASSIGNED_TO++;
       }
       if (bug.unread) {
         $scope.counts_by_status.UNREAD++;
+      }
+      if (bug.is_changed) {
+        $scope.counts_by_status.CHANGED++;
       }
       $scope.counts_by_status[bug.status] = 1 + ($scope.counts_by_status[bug.status] || 0);
     });
@@ -363,7 +367,7 @@ function BugsController($scope, $timeout, $http, $interval) {
             $scope.bugs[index] = bug;
           }
         });
-
+        reCountBugsByStatus($scope.bugs);
         localForage.setItem(bug.id, bug);
         if (callback) callback();
       }).error(function(data, status, headers, config) {
@@ -592,8 +596,11 @@ function BugsController($scope, $timeout, $http, $interval) {
     }
     if (bug.unread) {
       L('BUg was unread');
-      bug.unread = false;
       $scope.counts_by_status.UNREAD--;
+    }
+    if (bug.is_changed) {
+      L("Bug was changed");
+      $scope.counts_by_status.CHANGED--;
     }
     $scope.in_config = false; // just in case
     $scope.in_about = false; // just in case
@@ -1354,6 +1361,13 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
 
   $scope.isFilteredStatus = function(bug) {
     if (!$scope.selected_statuses.length) return true; // ALL is "selected"
+    if (_.contains($scope.selected_statuses, 'CHANGED')) {
+      if (!bug.is_changed) {
+        return false;
+      } else if ($scope.selected_statuses.length === 1) {
+        return true;
+      }
+    }
     if (_.contains($scope.selected_statuses, 'UNREAD')) {
       if (!bug.unread) {
         return false;

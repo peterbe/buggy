@@ -167,7 +167,7 @@
     background-color: #DF2D4F;
 }
 .status-RESOLVED, .badge-RESOLVED {
-    background-color: #5ABA59;
+    background-color: #FFC94C;
 }
 .status-VERIFIED, .badge-VERIFIED {
     /*background-color: #FFC94C;*/
@@ -182,6 +182,9 @@
 }
 .status-UNREAD {
     background-color: #02a3c6;
+}
+.status-CHANGED {
+    background-color: #5ABA59;
 }
 .status-STARRED {
     background-color: rgb(250, 210, 50);

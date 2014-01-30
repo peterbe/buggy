@@ -47,6 +47,12 @@
                           ng-click="filterByStatus('UNREAD')"
                           ><span class="status status-UNREAD"></span>UNREAD ({{ counts_by_status.UNREAD }})</a></li>
 
+                    <li class="label"
+                        ><a href="#"
+                          ng-class="{active: isSelectedStatus('CHANGED')}"
+                          ng-click="filterByStatus('CHANGED')"
+                          ><span class="status status-CHANGED"></span>CHANGED ({{ counts_by_status.CHANGED }})</a></li>
+
                     <li class="pure-menu-heading">Options</li>
                     <li><a href="#" ng-click="toggleConfig()">Config</a></li>
 
