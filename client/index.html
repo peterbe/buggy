@@ -293,7 +293,7 @@
 			last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
                   </p>
                   <p class="email-content-subtitle" ng-if="isAssignedTo(bug)">
-                        Assigned to <b>{{ bug.assigned_to_detail.real_name }}</b>
+                        Assigned to <b>{{ bug.assigned_to_detail.real_name ||bug.assigned_to_detail.email }}</b>
                   </p>
                 </div>
 

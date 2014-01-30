@@ -13,6 +13,7 @@ TODO
 * Being able to add bugs outside chosen products as "misc" bugs
   This might need an interface, like "Find bugs you've reported"
 
+
 SOME DAY TODO
 =============
 
@@ -21,6 +22,8 @@ SOME DAY TODO
 * Retroactively, for all attachments that are image/* content types,
   download them separately and use http://stackoverflow.com/a/3223466
   to resize them into thumbnails.
+
+* Upgrade localForage and use promises
 
 DONE
 ====
