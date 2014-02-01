@@ -92,9 +92,8 @@
             </li>
           </ul>
 	</div>
-        <!-- consider `email-item-selected` -->
-        <div id="list-items" when-scrolled="listScrolled()">
-          <div class="email-item pure-g" ng-repeat="bug in bugs | filter:isFilteredProduct | filter:isFilteredStatus | filter:filterBySearch | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
+        <div id="list-items">
+          <div class="email-item pure-g" ng-repeat="bug in filtered_bugs = (bugs | filter:isFilteredProduct | filter:isFilteredStatus | filter:filterBySearch) | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
              ng-class="{'email-item-unread': bug.unread, 'email-item-changed': bug.is_changed, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)">
             <div class="pure-u">
                 <img class="email-avatar" alt="Avatar" height="32" width="32" ng-if="isEmail(bug.creator)" ng-src="{{ avatarURL(bug.creator) }}">
@@ -116,7 +115,22 @@
             </div>
           </div>
 
-          <div ng-if="canLoadMore()" class="email-item">
+          <div ng-if="!filtered_bugs.length && products.length" class="email-item">
+            <p>Filtered too much?</p>
+
+            <p ng-if="product_filters.length">
+              You've filtered by:<br><b>{{ product_filters.join(', ') }}</b>.
+              <a href="#" ng-click="filterByProduct('ALL')">Reset</a>
+            </p>
+
+            <p ng-if="selected_statuses.length">
+              Only showing: <br><b>{{ selected_statuses.join(', ') }}</b>.
+              <a href="#" ng-click="filterByStatus('ALL')">Reset</a>
+            </p>
+
+          </div>
+
+          <div ng-if="canLoadMore(filtered_bugs.length)" class="email-item">
             <p>
               Limited to the {{ list_limit }} most recently changed.<br>
               <a href="#" ng-click="loadMore()">Load more</a>
@@ -288,7 +302,7 @@
                 </div>
                 <div class="pure-u-3-4">
                   <p class="email-content-subtitle">
-                        By <b>{{ bug.creator_detail.real_name }}</b> at
+                        By <b>{{ bug.creator_detail.real_name || bug.creator_detail.email }}</b> at
                         <span>{{ bug.creation_time }}</span><br>
 			last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
                   </p>

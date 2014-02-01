@@ -34,23 +34,6 @@ app.filter('stringArraySort', function() {
   };
 });
 
-app.directive('whenScrolled', function() {
-  return function(scope, elm, attr) {
-    var raw = elm[0];
-    var funCheckBounds = function(evt) {
-      //console.log("event fired: " + evt.type);
-      var rectObject = raw.getBoundingClientRect();
-      //console.log(rectObject.bottom, window.innerHeight);
-      if (rectObject.bottom < window.innerHeight) {
-        //console.log('**At the bottom');
-        scope.$apply(attr.whenScrolled);
-      }
-
-    };
-    angular.element(window).bind('scroll load', funCheckBounds);
-  };
-});
-
 
 BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
@@ -849,13 +832,6 @@ function BugsController($scope, $timeout, $http, $interval) {
         // error callback
         stopLoading();
       });
-    }
-  };
-
-  $scope.listScrolled = function() {
-    if (_downloaded_comments) {
-      _downloaded_comments = 0;
-      downloadSomeComments();
     }
   };
 
