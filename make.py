@@ -89,8 +89,10 @@ def hash_all_css_images(css_code, rel_dir, source_dir, dest_dir):
             a, b = os.path.splitext(filename)
             new_filename = '%s-%s%s' % (a, hash, b)
             new_filename = os.path.basename(new_filename)
+            print "DEST_DIR", dest_dir
             new_filepath = os.path.abspath(os.path.join(dest_dir, new_filename))
             mkdir(os.path.dirname(new_filepath))
+            print "new_filepath", new_filepath
             shutil.copyfile(full_path, new_filepath)
 
         return match.group().replace(filename, new_filename)
@@ -128,6 +130,8 @@ class Page(object):
             combined = []
             template = None
             if type_ == 'js':
+                if self.inline_js:
+                    output_directory = self.output_directory
                 for src in src_regex.findall(bulk):
                     path = os.path.join(self.source_directory, src)
                     this_content = read(path)
@@ -141,6 +145,8 @@ class Page(object):
                 else:
                     tag_template = '<script src="%s"></script>'
             elif type_ == 'css':
+                if self.inline_css:
+                    output_directory = self.output_directory
                 for href in href_regex.findall(bulk):
                     path = os.path.join(self.source_directory, href)
                     this_content = read(path)
