@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buggy</title>
 
-<!-- build:css combined.min.css -->
+<!-- build:css _cache/combined-$hash.min.css -->
 <link rel="stylesheet" href="static/css/vendor/dialog-polyfill.css">
 <link rel="stylesheet" href="static/css/vendor/pure-min.css">
 <link rel="stylesheet" href="static/css/email.css">
@@ -423,10 +423,12 @@
 </dialog>
 
 
+<!-- build:js _cache/first-$hash.min.js -->
 <script src="static/js/vendor/dialog-polyfill.js"></script>
 <script src="static/js/cloak-dialog.js"></script>
+<!-- endbuild -->
 
-<!-- build:js vendor.min.js -->
+<!-- build:js _cache/vendor-$hash.min.js -->
 <script src="static/js/vendor/angular.min.js"></script>
 <script src="static/js/vendor/angular-sanitize.min.js"></script>
 <script src="static/js/vendor/localForage.js"></script>
@@ -436,7 +438,7 @@
 <script src="static/js/vendor/howler.min.js"></script>
 <!-- endbuild -->
 
-<!-- build:js bundle.min.js -->
+<!-- build:js _cache/bundle-$hash.min.js -->
 <script src="static/js/md5.js"></script>
 <script src="static/js/angularForage.js"></script>
 <script src="static/js/utils.js"></script>
