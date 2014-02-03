@@ -356,7 +356,7 @@ function BugsController($scope, $timeout, $http, $interval) {
         if (status === 0) {
           $scope.is_offline = true;
         } else {
-          setErrorNotice('Remote trouble. Unable to fetch the bug comments.');
+          setErrorNotice('Network trouble. Unable to fetch the bug comments.');
         }
         //console.dir(data);
         console.log('status', status);
@@ -417,7 +417,7 @@ function BugsController($scope, $timeout, $http, $interval) {
           // timed out, possibly no internet connection
           $scope.is_offline = true;
         } else {
-          setErrorNotice('Remote trouble. Unable to fetch the bug comments.');
+          setErrorNotice('Network trouble. Unable to fetch the bug comments.');
         }
         //console.dir(data);
         console.log('status', status);
