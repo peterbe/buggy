@@ -337,19 +337,22 @@ function BugsController($scope, $timeout, $http, $interval) {
         //console.log('Comments Success');
         $scope.is_offline = false;
         logDataDownloaded(data);
-        //console.dir(data);
-        bug.comments = data.bugs[bug.id].comments;
-        if (bug.comments.length) {
-          bug.extract = makeCommentExtract(_.last(bug.comments));
-        }
-        // we also need to update $scope.bugs where a copy of this bug exists
-        _.each($scope.bugs, function(list_bug, index) {
-          if (list_bug.id === bug.id) {
-            $scope.bugs[index] = bug;
+        if (data.bugs) {
+          bug.comments = data.bugs[bug.id].comments;
+          if (bug.comments.length) {
+            bug.extract = makeCommentExtract(_.last(bug.comments));
           }
-        });
-        reCountBugsByStatus($scope.bugs);
-        localForage.setItem(bug.id, bug);
+          // we also need to update $scope.bugs where a copy of this bug exists
+          _.each($scope.bugs, function(list_bug, index) {
+            if (list_bug.id === bug.id) {
+              $scope.bugs[index] = bug;
+            }
+          });
+          reCountBugsByStatus($scope.bugs);
+          localForage.setItem(bug.id, bug);
+        } else {
+          console.warn("No 'bugs' in data", data);
+        }
         if (callback) callback();
       }).error(function(data, status, headers, config) {
         console.warn("Failure to fetchComments");
@@ -1484,17 +1487,6 @@ app.controller('BugController', ['$scope', function($scope) {
 
   $scope.at_top = true;
   $scope.at_bottom = false;
-
-  $scope.show_history = false;
-  angularForage.getItem($scope, 'show_history', function(value) {
-    if (value) {
-      $scope.show_history = value;
-    }
-  });
-  $scope.toggleShowHistory = function() {
-    $scope.show_history = !$scope.show_history;
-    localForage.setItem('show_history', $scope.show_history);
-  };
 
   $scope.isAssignedTo = function(bug) {
     return bug.assigned_to && bug.assigned_to != 'nobody@mozilla.org';

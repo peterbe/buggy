@@ -289,12 +289,6 @@
 		  </p>
 		    <button class="pure-button secondary-button" ng-click="refreshBug(bug)"
 		      >Refresh Bug</button>
-                    <button class="pure-button secondary-button" ng-click="toggleShowHistory()" ng-if="!show_history">
-                    Hide History ({{ bug.history.length }})
-                    </button>
-                    <button class="pure-button secondary-button" ng-click="toggleShowHistory()" ng-if="show_history">
-                    Show History ({{ bug.history.length }})
-                    </button>
                 </div>
 
                 <div class="pure-u" ng-if="bug.creator_detail.email">
@@ -329,7 +323,7 @@
                 <pre ng-bind-html="thing.comment.text | linky:'_blank'"></pre>
               </div>
 
-              <div ng-if="thing.change" ng-class="{hidden: show_history}" class="email-content-body">
+              <div ng-if="thing.change" class="email-content-body">
                 <div class="pure-u" ng-if="isEmail(thing.change.who)">
                   <img class="email-avatar" alt="Avatar" height="32" width="32" ng-src="{{ avatarURL(thing.change.who) }}">
                 </div>
