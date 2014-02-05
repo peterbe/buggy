@@ -25,3 +25,8 @@ var serializeObject = function(obj) {
 function isAllDigits(x) {
   return !x.match(/[^\d]/);
 }
+
+
+function escapeRegExp(string){
+  return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}

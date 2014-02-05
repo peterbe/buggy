@@ -1,6 +1,6 @@
 /* global _, localForage, Howl, console, get_gravatar, serializeObject, filesize, document,
    POP_SOUNDS, isAllDigits, window, angularForage, angular, alert, moment,
-   setTimeout, showCloakDialog, closeCloakDialog */
+   setTimeout, showCloakDialog, closeCloakDialog, escapeRegExp */
 
 
 
@@ -542,9 +542,7 @@ function BugsController($scope, $timeout, $http, $interval) {
       console.warn('No previously stored products');
       closeCloakDialog();
     }
-
   });
-
 
 
   /* Pulls down the comments for some bugs we haven't already
@@ -1343,18 +1341,17 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
     search_q_temp = value;
     search_q_timeout = $timeout(function() {
       $scope.search_q = search_q_temp;
-    }, 400);
+    }, 300);
+  });
+
+  var search_q_regex;
+  $scope.$watch('search_q', function(value) {
+    search_q_regex = new RegExp(escapeRegExp(value), 'i');
   });
 
   $scope.filterBySearch = function(bug) {
     if (!$scope.search_q) return true;
-    if (isAllDigits($scope.search_q) &&
-        ('' + bug.id).substring(0, $scope.search_q.length) === $scope.search_q
-       ) {
-      return true;
-    }
-    var regex = new RegExp($scope.search_q, 'i');
-    return regex.test(bug.summary);
+    return search_q_regex.test(bug.summary) || search_q_regex.test('' + bug.id);
   };
 
   $scope.submitSearch = function() {
@@ -1362,10 +1359,12 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
       $scope.search_q = $scope.search_q_primary;
     }
     if ($scope.search_q) {
-      var found_bugs = _.filter($scope.bugs, $scope.filterBySearch);
+      var found_bugs = _.filter($scope.bugs, $scope.isFilteredProduct);
+      found_bugs = _.filter(found_bugs, $scope.isFilteredStatus);
+      found_bugs = _.filter(found_bugs, $scope.filterBySearch);
       if (found_bugs.length == 1) {
-        $scope.bug = found_bugs[0];
-        $scope.search_q = '';
+        $scope.selectBug(found_bugs[0]);
+        $scope.search_q = $scope.search_q_primary = '';
         $scope.in_search = false;
       }
     }
@@ -1379,8 +1378,7 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
       // it's a number!
       text = '' + text;
     }
-    var regex = new RegExp($scope.search_q, 'i');
-    _.each(regex.exec(text), function(match) {
+    _.each(search_q_regex.exec(text), function(match) {
       text = text.replace(match, '<span class="match">' + match + '</span>');
     });
     return text;
@@ -1508,9 +1506,6 @@ app.controller('ConfigController', ['$scope', function($scope) {
     return false;
   };
 
-  function escapeRegExp(string){
-    return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-  }
   $scope.searching_products = false;
   $scope.search_products = '';
   $scope.isFoundProductChoice = function(combo) {
