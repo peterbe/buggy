@@ -110,6 +110,9 @@
     100% { opacity: 1.0; }
 }
 
+#list {
+    overflow-x: hidden;
+}
 
 #list-options {
     position: fixed;
