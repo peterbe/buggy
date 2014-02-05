@@ -10,8 +10,8 @@ var D = function() { console.dir.apply(console, arguments); };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
-var FETCH_NEW_BUGS_FREQUENCY = 30;
-var FETCH_CHANGED_BUGS_FREQUENCY = 35;
+var FETCH_NEW_BUGS_FREQUENCY = 40;
+var FETCH_CHANGED_BUGS_FREQUENCY = 45;
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
@@ -34,6 +34,19 @@ app.filter('stringArraySort', function() {
   };
 });
 
+
+/* from http://jsfiddle.net/BM2gG/3/ */
+app.directive('keybinding', function () {
+  return {
+    restrict: 'E',
+    scope: {
+      invoke: '&'
+    },
+    link: function (scope, el, attr) {
+      Mousetrap.bind(attr.on, scope.invoke);
+    }
+  };
+});
 
 BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
@@ -190,6 +203,9 @@ function BugsController($scope, $timeout, $http, $interval) {
   };
 
   $scope.toggleAbout = function() {
+    if ($scope.in_config && !$scope.in_about) {
+      $scope.in_config = false;
+    }
     $scope.in_about = ! $scope.in_about;
   };
 
@@ -220,10 +236,6 @@ function BugsController($scope, $timeout, $http, $interval) {
   function lastChangeTimeSorter(bug) {
     return bug.last_change_time;
   }
-  //$scope.lastChangeTimeSorter = lastChangeTimeSorter;
-//  $scope.lastChangeTimeSorter = function(bug) {
-//    return bug.last_change_time;
-//  }
 
   function fetchAndUpdateBugs(callback) {
     var _products_left = $scope.products.length;
@@ -528,7 +540,8 @@ function BugsController($scope, $timeout, $http, $interval) {
             angularForage.getItem($scope, id, function(bug) {
               if (bug) {
                 console.log('selected bug:', bug.id);
-                $scope.bug = bug;
+                $scope.selectBug(bug);
+                //$scope.bug = bug;
               } else {
                 console.warn('selected_bug not available');
               }
@@ -1300,11 +1313,6 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
     $scope.show_product_filters = ! $scope.show_product_filters;
   };
 
-  /*
-  $scope.$watch('product_filters', function(val) {
-    L('product_filters=', val);
-  });*/
-
   $scope.filterByProduct = function(product) {
     if (product === 'ALL') {
       $scope.product_filters = [];
@@ -1437,6 +1445,44 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
   $scope.toId = function(value) {
     // convert the string so it can be used as an ID
     return value.replace(/^[0-9]+/, '').replace(/[^a-z0-9]/gi, '');
+  };
+
+  function getCurrentBuglist() {
+    // this does what the main `ng-repeat` does in the `id="list"` element
+    var bugs = _.filter($scope.bugs, $scope.isFilteredProduct);
+    bugs = _.filter(bugs, $scope.isFilteredStatus);
+    bugs = _.filter(bugs, $scope.filterBySearch);
+    bugs = _.sortBy(bugs, function(item) {
+      return item.last_change_time
+    }).reverse();
+    return bugs;
+  }
+
+  $scope.selectNext = function() {
+    var is_next = false;
+    var bugs = getCurrentBuglist();
+    _.each(bugs, function(bug) {
+      if (is_next) {
+        $scope.selectBug(bug);
+        is_next = false;
+      } else if (bug.id === $scope.bug.id) {
+        is_next = true;
+      }
+    });
+  };
+
+  $scope.selectPrevious = function() {
+    var previous = null;
+    var bugs = getCurrentBuglist();
+    _.each(bugs, function(bug) {
+      if (bug.id === $scope.bug.id) {
+        if (previous) {
+          $scope.selectBug(previous);
+        }
+      } else {
+        previous = bug;
+      }
+    });
   };
 
 }]);

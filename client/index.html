@@ -67,6 +67,9 @@
     </div>
 
     <div class="pure-u-1" id="list" ng-controller="ListController">
+        <keybinding on="j" invoke="selectNext()" />
+        <keybinding on="k" invoke="selectPrevious()" />
+        <keybinding on="/" invoke="toggleSearch()" />
         <div id="list-options">
           <form class="pure-form" id="searchform" ng-submit="submitSearch()">
             <input type="text" ng-model="search_q_primary" id="search_q" class="pure-input-rounded" placeholder="Search...">
@@ -382,9 +385,34 @@
             </div>
             <div class="email-content-body">
 	    <p>
-              Project hosted in Github:
+              Project can be forked on Github:
               <a href="https://github.com/peterbe/buggy" target="_blank" style="font-weight: bold">github.com/peterbe/buggy</a>
             </p>
+            </div>
+            <div class="email-content-body">
+              <h2>Keyboard Shortcuts</h2>
+              <table class="pure-table keyboard-shortcuts">
+                <thead>
+                  <tr>
+                    <th>What</th>
+                    <th>Happens</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="text-align:center"><code>/</code></td>
+                    <td>Focus on <b>search</b></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align:center"><code>j</code></td>
+                    <td>Select <b>next</b> bug in the list</td>
+                  </tr>
+                  <tr>
+                    <td style="text-align:center"><code>k</code></td>
+                    <td>Select <b>previous</b> bug in the list</td>
+                  </tr>
+                </tbody>
+              </table>
 	    </div>
 	</div><!-- /about -->
 
@@ -425,6 +453,7 @@
 <!-- build:js _cache/vendor-$hash.min.js -->
 <script src="static/js/vendor/angular.min.js"></script>
 <script src="static/js/vendor/angular-sanitize.min.js"></script>
+<script src="static/js/vendor/mousetrap.min.js"></script>
 <script src="static/js/vendor/localForage.js"></script>
 <script src="static/js/vendor/underscore-min.js"></script>
 <script src="static/js/vendor/moment.min.js"></script>

@@ -11,8 +11,6 @@ TODO
 * Being able to add bugs outside chosen products as "misc" bugs
   This might need an interface, like "Find bugs you've reported"
 
-* Keyboard shortcuts for listing up and down
-
 
 SOME DAY TODO
 =============
@@ -92,3 +90,5 @@ DONE
 * Filter by changed bugs (like you can with unread)
 
 * Display attachments
+
+* Keyboard shortcuts for listing up and down
