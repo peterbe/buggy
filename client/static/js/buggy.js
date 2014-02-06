@@ -1461,6 +1461,12 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
   $scope.selectNext = function() {
     var is_next = false;
     var bugs = getCurrentBuglist();
+    // if the currently selected bug is not in the list,
+    // it's going to be impossible to go to the next,
+    // so if that's the case, just select the first one
+    if ($scope.bug && !_.find(bugs, function(bug) { return bug.id === $scope.bug.id })) {
+      is_next = true;
+    }
     _.each(bugs, function(bug) {
       if (is_next) {
         $scope.selectBug(bug);
