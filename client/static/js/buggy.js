@@ -50,7 +50,7 @@ app.directive('keybinding', function () {
 
 BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
 
-function BugsController($scope, $timeout, $http, $interval) {
+function BugsController($scope, $timeout, $http, $interval, $location) {
   'use strict';
 
   var _inprogress_refreshing = false;
@@ -349,7 +349,7 @@ function BugsController($scope, $timeout, $http, $interval) {
         //console.log('Comments Success');
         $scope.is_offline = false;
         logDataDownloaded(data);
-        if (data.bugs) {
+        if (data.bugs && data.bugs[bug.id]) {
           bug.comments = data.bugs[bug.id].comments;
           if (bug.comments.length) {
             bug.extract = makeCommentExtract(_.last(bug.comments));
@@ -452,13 +452,15 @@ function BugsController($scope, $timeout, $http, $interval) {
         // we can't just copy the attachment onto the bug and save it because
         // it's potentially too large
         var attachments = [];
-        _.each(data.bugs[bug.id], function(attachment) {
-          if (attachment.is_obsolete) return;
-          attachments.push(attachment);
-        });
-        if (attachments.length) {
-          bug.attachments = attachments;
-          localForage.setItem(bug.id, bug);
+        if (data.bugs && data.bugs[bug.id]) {
+          _.each(data.bugs[bug.id], function(attachment) {
+            if (attachment.is_obsolete) return;
+            attachments.push(attachment);
+          });
+          if (attachments.length) {
+            bug.attachments = attachments;
+            localForage.setItem(bug.id, bug);
+          }
         }
         if (callback) callback();
       }).error(function(data, status) {
@@ -1292,8 +1294,9 @@ function BugsController($scope, $timeout, $http, $interval) {
 /* ListController
  * For the middle pane where you scroll and search bugs.
  */
-app.controller('ListController', ['$scope', '$timeout', function($scope, $timeout) {
-
+app.controller('ListController',
+               ['$scope', '$timeout', '$location', '$anchorScroll',
+                function($scope, $timeout, $location, $anchorScroll) {
   $scope.search_q_primary = '';  // the model used for dumping to search_q
   $scope.search_q = '';  // the variable used for filtering
   $scope.in_search = false;
@@ -1467,22 +1470,36 @@ app.controller('ListController', ['$scope', '$timeout', function($scope, $timeou
     if ($scope.bug && !_.find(bugs, function(bug) { return bug.id === $scope.bug.id })) {
       is_next = true;
     }
+    var previous = null;
     _.each(bugs, function(bug) {
       if (is_next) {
+        var hash_to = 'b';
+        if (previous) hash_to += previous.id;
+        else hash_to += bug.id;
+        if ((elm = document.getElementById(hash_to))) elm.scrollIntoView();
         $scope.selectBug(bug);
         is_next = false;
       } else if (bug.id === $scope.bug.id) {
         is_next = true;
       }
+      previous = bug;
     });
   };
 
   $scope.selectPrevious = function() {
     var previous = null;
     var bugs = getCurrentBuglist();
-    _.each(bugs, function(bug) {
+    _.each(bugs, function(bug, i) {
       if (bug.id === $scope.bug.id) {
         if (previous) {
+          if (i > 2) {
+            var hash_to = 'b' + bugs[i - 2].id;
+            if ((elm = document.getElementById(hash_to))) elm.scrollIntoView();
+          } else {
+            var hash_to = 'b' + previous.id;
+            if ((elm = document.getElementById(hash_to))) elm.scrollIntoView();
+          }
+          // yay! we've found it
           $scope.selectBug(previous);
         }
       } else {

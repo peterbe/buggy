@@ -97,7 +97,8 @@
 	</div>
         <div id="list-items">
           <div class="email-item pure-g" ng-repeat="bug in filtered_bugs = (bugs | filter:isFilteredProduct | filter:isFilteredStatus | filter:filterBySearch) | orderBy:'last_change_time':true | limitTo:list_limit  track by bug.id"
-             ng-class="{'email-item-unread': bug.unread, 'email-item-changed': bug.is_changed, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)">
+             ng-class="{'email-item-unread': bug.unread, 'email-item-changed': bug.is_changed, 'email-item-active': isSelectedBug(bug)}" ng-click="selectBug(bug)"
+             id="b{{ bug.id }}">
             <div class="pure-u">
                 <img class="email-avatar" alt="Avatar" height="32" width="32" ng-if="isEmail(bug.creator)" ng-src="{{ avatarURL(bug.creator) }}">
                 <br><br>
