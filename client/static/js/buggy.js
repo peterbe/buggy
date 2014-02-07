@@ -616,6 +616,8 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
      empty: true
   };
 
+  var start_updating_comments_timer = null;
+
   $scope.selectBug = function(bug) {
     // Due to a "bug" in the native REST api, we don't the real_name
     // in the creator of the comment so we make a hash table from all bugs
@@ -640,16 +642,26 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     localForage.setItem(bug.id, bug);
     localForage.setItem('selected_bug', bug.id);
     bug.things = $scope.getThings(bug);
-    fetchAndUpdateComments(bug, function() {
-      bug.things = $scope.getThings(bug);
-      fetchAndUpdateHistory(bug, function() {
+    if (start_updating_comments_timer) {
+      $timeout.cancel(start_updating_comments_timer);
+    }
+    // the reason we want to have a slight delay before we do this is
+    // that the user might possibly be flicking through bugs really
+    // quick and if we were to fire off updates on each, it'd make far
+    // too much traffic
+    start_updating_comments_timer = $timeout(function() {
+      console.log("Fetching comments for ", bug.id);
+      fetchAndUpdateComments(bug, function() {
         bug.things = $scope.getThings(bug);
-        fetchAndUpdateBug(bug);
-        fetchAndUpdateAttachments(bug, function() {
+        fetchAndUpdateHistory(bug, function() {
           bug.things = $scope.getThings(bug);
+          fetchAndUpdateBug(bug);
+          fetchAndUpdateAttachments(bug, function() {
+            bug.things = $scope.getThings(bug);
+          });
         });
       });
-    });
+    }, 1000);
     $scope.bug = bug;
   };
 
