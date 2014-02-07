@@ -269,17 +269,27 @@
         <div class="email-content" ng-if="!bug.empty && !in_config && !in_about" scrolling ng-controller="BugController">
 	    <div class="scrolling">
               <p>
-  	        <a href="#bottom" ng-if="!at_bottom">&darr; Bottom</a>
-  	        <a href="#top" ng-if="!at_top">&uarr; Top</a>
+  	        <a href="#bottom" ng-click="gotoBottom()" ng-class="{hidden: at_bottom}">&darr; Bottom</a>
+  	        <a href="#top" ng-click="gotoTop()" ng-class="{hidden: at_top}">&uarr; Top</a>
               </p>
 	    </div>
+	    <div class="sticky-summary" ng-class="{hidden: !show_sticky}">
+  	        <h5>
+                  <a href="{{ makeBugzillaLink(bug.id) }}" target="_blank">{{ bug.id }}</a>
+                  <span class="email-name">{{ bug.product }} :: {{ bug.component }}</span>
+                  <span class="badge badge-small badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
+                  <span class="badge badge-small" ng-if="bug.resolution">{{ bug.resolution }}</span>
+                  <a href="#top" ng-click="gotoTop()">&uarr; Top</a>
+                </h5>
+		<h4>{{ bug.summary }}</h4>
+  	    </div>
             <div class="email-content-header pure-g">
 
                 <div class="pure-u-2-3">
                     <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
                     <h2 class="email-content-title">{{ bug.summary }}</h2>
                     <p class="external-url">
-                      <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}"
+                      <a href="{{ makeBugzillaLink(bug.id) }}"
                          target="_blank">
                         {{ makeBugzillaLink(bug.id) }}
                       </a>

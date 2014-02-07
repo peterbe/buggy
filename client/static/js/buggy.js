@@ -1531,32 +1531,46 @@ app.directive("scrolling", function () {
     var onScroll = function(e) {
       //L("Scrolled!");
       var rect = raw.getBoundingClientRect();
+      //console.log(rect.top, scope.show_sticky);
+      var apply = false;
+      if (rect.top < -100) {
+        // no longer at the top
+        if (!scope.show_sticky) {
+          scope.show_sticky = true;
+          apply = true;
+        }
+      } else {
+        if (scope.show_sticky) {
+          scope.show_sticky = false;
+          apply = true;
+        }
+      }
       if ((rect.top + 50) >= 0) {
         if (!scope.at_top) {
           //L('AT TOP');
           scope.at_top = true;
           scope.at_bottom = false;
-          scope.$apply();
+          apply = true;
         }
       } else if ((rect.bottom - 50) <= innerHeight) {
         if (!scope.at_bottom) {
           //L('AT BOTTOM');
           scope.at_top = false;
           scope.at_bottom = true;
-          scope.$apply();
+          apply = true;
         }
       } else {
         // in the middle
         if (scope.at_top) {
           scope.at_top = false;
-          scope.$apply();
+          apply = true;
         }
         if (scope.at_bottom) {
           scope.at_bottom = false;
-          scope.$apply();
+          $apply = true;
         }
       }
-      //L(rect.bottom, innerHeight);
+      if (apply) scope.$apply();
     };
     angular.element(window).bind('scroll load', onScroll);
   };
@@ -1566,9 +1580,17 @@ app.controller('BugController', ['$scope', function($scope) {
 
   $scope.at_top = true;
   $scope.at_bottom = false;
+  $scope.show_sticky = false;
 
   $scope.isAssignedTo = function(bug) {
     return bug.assigned_to && bug.assigned_to != 'nobody@mozilla.org';
+  };
+
+  $scope.gotoTop = function() {
+    if (elm = document.getElementById('top')) elm.scrollIntoView();
+  };
+  $scope.gotoBottom = function() {
+    if (elm = document.getElementById('bottom')) elm.scrollIntoView();
   };
 
 }]);

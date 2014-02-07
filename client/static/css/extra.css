@@ -126,6 +126,7 @@
     background: #fff;
     border-bottom: 1px solid #ccc;
     z-index: 100;
+    height: 40px;
 }
 #list-options p {
     margin:5px 20px;
@@ -311,4 +312,31 @@ dialog::backdrop {
 }
 .backdrop {
   background-color: rgba(0, 0, 0, 0.7);
+}
+
+
+.sticky-summary {
+    background-color: #fff;
+    width: 70%;
+    position: fixed;
+    box-shadow: 0 3px 3px -2px rgba(120, 120, 120, 0.5);
+    border-bottom: 1px solid #ccc;
+    height: 40px;  /* same as #list-options */
+    z-index: 3;
+}
+.sticky-summary h4,
+.sticky-summary h5 {
+    font-size: 0.8em;
+    margin:0.3em 0.5em;
+}
+.sticky-summary h5 .email-name {
+    font-size: 0.9em;
+}
+.sticky-summary h5 .badge {
+    font-weight: normal;
+}
+
+.hidden {
+    display: none !important;
+    visibility: hidden !important;
 }
