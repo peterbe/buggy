@@ -1468,7 +1468,7 @@ app.controller('ListController',
     bugs = _.filter(bugs, $scope.isFilteredStatus);
     bugs = _.filter(bugs, $scope.filterBySearch);
     bugs = _.sortBy(bugs, function(item) {
-      return item.last_change_time
+      return item.last_change_time;
     }).reverse();
     return bugs;
   }
@@ -1479,7 +1479,9 @@ app.controller('ListController',
     // if the currently selected bug is not in the list,
     // it's going to be impossible to go to the next,
     // so if that's the case, just select the first one
-    if ($scope.bug && !_.find(bugs, function(bug) { return bug.id === $scope.bug.id })) {
+    if ($scope.bug && !_.find(bugs, function(bug) {
+      return bug.id === $scope.bug.id;
+    })) {
       is_next = true;
     }
     var previous = null;
@@ -1504,11 +1506,12 @@ app.controller('ListController',
     _.each(bugs, function(bug, i) {
       if (bug.id === $scope.bug.id) {
         if (previous) {
+          var hash_to;
           if (i > 2) {
-            var hash_to = 'b' + bugs[i - 2].id;
+            hash_to = 'b' + bugs[i - 2].id;
             if ((elm = document.getElementById(hash_to))) elm.scrollIntoView();
           } else {
-            var hash_to = 'b' + previous.id;
+            hash_to = 'b' + previous.id;
             if ((elm = document.getElementById(hash_to))) elm.scrollIntoView();
           }
           // yay! we've found it
