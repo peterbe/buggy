@@ -383,6 +383,40 @@
 
             </div><!-- /repeat bug.things -->
             <div id="bottom"></div>
+
+	    <div class="email-content-body post-comment" ng-class="{hidden: !auth_token}">
+  	      <form ng-submit="submitUpdate()" class="pure-form">
+                <textarea ng-model="comment" placeholder="Post a comment..."></textarea><br>
+                <br>
+                <select ng-model="status">
+                  <!--<option value="">Optionally change status</option>-->
+                  <option ng-repeat="s in changeable_statuses" value="{{ s }}">{{ s }}</option>
+                </select>
+                <select ng-model="resolution" ng-class="{hidden: !changeable_resolutions.length}">
+                  <option ng-repeat="r in changeable_resolutions" value="{{ r }}">{{ r }}</option>
+                </select>
+                <button type="submit" class="pure-button pure-button-primary button-small">Submit</button>
+	      </form>
+              {{ post_queue }}
+              <div ng-repeat="post in getBugPostQueue(bug.id) track by post._when">
+                <h4 ng-if="!$index">Sync Queue</h4>
+                <div class="post-queue-item">
+                  <a ng-if="post._error"
+                     href="#" class="pure-button button-small cancel pure-button-primary"
+                     ng-click="cancelPost(bug.id, post._when)">
+                      Cancel
+                  </a>
+                  <p><b>Submitted <span>{{ displayTimeAgo(post._when) }}</span></b></p>
+                  <p ng-if="post.status"><b>Status &rarr;</b> <code>{{ post.status }}</code></p>
+                  <p ng-if="post.resolution"><b>Resolution &rarr;</b> <code>{{ post.resolution }}</code></p>
+                  <p ng-if="post.comment"><b>Comment &rarr;</b> <span class="extract">{{ post.comment }}</span></p>
+                  <p ng-if="post._error" class="error">
+                    <b>Error:</b>
+                    <span>{{ post._error }}</span>
+                  </p>
+
+              </div>
+            </div>
         </div><!-- /!bug -->
 
         <div class="email-content" ng-if="!bug.empty && in_about">

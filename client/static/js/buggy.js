@@ -10,9 +10,10 @@ var D = function() { console.dir.apply(console, arguments); };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
-var FETCH_NEW_BUGS_FREQUENCY = 40;
-var FETCH_CHANGED_BUGS_FREQUENCY = 45;
+var FETCH_NEW_BUGS_FREQUENCY = 400;
+var FETCH_CHANGED_BUGS_FREQUENCY = 450;console.log('DEBUG MODE');
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
+var CLEAR_POST_QUEUE_FREQUENCY = 10;
 
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
@@ -185,8 +186,6 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     //console.log($scope.counts_by_status);
   }
 
-  // not sure this works well
-  //$scope.$watch('bugs', reCountBugsByStatus);
 
   $scope.toggleConfig = function() {
     if (!$scope.in_config) {
@@ -1579,7 +1578,7 @@ app.directive("scrolling", function () {
   };
 });
 
-app.controller('BugController', ['$scope', function($scope) {
+app.controller('BugController', ['$scope', '$interval', '$http', function($scope, $interval, $http) {
 
   $scope.at_top = true;
   $scope.at_bottom = false;
@@ -1595,6 +1594,229 @@ app.controller('BugController', ['$scope', function($scope) {
   $scope.gotoBottom = function() {
     if (elm = document.getElementById('bottom')) elm.scrollIntoView();
   };
+
+  $scope.changeable_statuses = ['CONFIRMED', 'RESOLVED'];
+  $scope.changeable_resolutions = [];
+  $scope.$watch('bug', function(bug) {
+    console.log("Changed to", bug.status);
+    if (bug.status === 'NEW') {
+      $scope.changeable_statuses = ['UNCONFIRMED', 'ASSIGNED', 'RESOLVED'];
+    } else if (bug.status === 'UNCONFIRMED') {
+      $scope.changeable_statuses = ['NEW', 'ASSIGNED', 'RESOLVED'];
+    } else if (bug.status === 'ASSIGNED') {
+      $scope.changeable_statuses = ['UNCONFIRMED', 'NEW', 'RESOLVED'];
+    } else if (bug.status === 'REOPENED') {
+      $scope.changeable_statuses = ['UNCONFIRMED', 'NEW', 'ASSIGNED', 'RESOLVED'];
+    } else if (bug.status === 'RESOLVED') {
+      $scope.changeable_statuses = ['UNCONFIRMED', 'REOPENED', 'VERIFIED'];
+    } else if (bug.status === 'VERIFIED') {
+      $scope.changeable_statuses = ['UNCONFIRMED', 'REOPENED', 'RESOLVED'];
+    }
+    $scope.status = 'Leave as ' + bug.status;
+    $scope.changeable_statuses.unshift('Leave as ' + bug.status);
+
+  });
+  $scope.$watch('status', function(status) {
+    if (status === 'RESOLVED' || status === 'VERIFIED') {
+      $scope.resolution = 'FIXED';  // the default
+      $scope.changeable_resolutions = ['FIXED', 'INVALID', 'WONTFIX', 'DUPLICATE', 'WORKSFORME', 'INCOMPLETE'];
+    } else {
+      $scope.changeable_resolutions = [];
+    }
+  });
+
+  $scope.post_queue = {};
+  angularForage.getItem($scope, 'post_queue', function(value) {
+    if (value !== null) {
+      $scope.post_queue = clearEmptyBugs(value);
+    }
+  });
+
+  $scope.cancelPost = function(bug_id, _when) {
+    $scope.post_queue[bug_id] = _.filter($scope.post_queue[bug_id], function(p) {
+      return p._when !== _when;
+    });
+  };
+
+  $scope.submitUpdate = function() {
+    console.log('$scope.post_queue', $scope.post_queue);
+    console.log('this.comment', this.comment, '$scope.comment', $scope.comment);
+    var comment = this.comment || '';
+    var status = this.status || '';
+    var resolution = this.resolution || '';
+    if (status.substring(0, 'Leave as '.length) === 'Leave as ') {
+      status = '';
+      resolution = '';
+    }
+    if (!status) {
+      if (!comment.trim()) {
+        return;
+      }
+    }
+    var post = {
+      'comment': comment,
+      'status': status,
+      'resolution': resolution,
+      '_when': new Date()
+    };
+    var bug_id = $scope.bug.id;
+    if (!$scope.post_queue[bug_id]) {
+      $scope.post_queue[bug_id] = [];
+    }
+    $scope.post_queue[bug_id].push(post);
+    angularForage.setItem($scope, 'post_queue', $scope.post_queue, function() {
+      $scope.comment = '';
+      $scope.status = 'Leave as ' + $scope.bug.status;
+      $scope.resolution = '';
+      if (!_lock_post_queue) {
+        _lock_post_queue = true;
+        clearPostQueue(function() {
+          _lock_post_queue = false;
+        });
+      }
+    });
+  };
+
+  function postComment(bug_id, params) {
+    if ($scope.auth_token) {
+      params.token = $scope.auth_token;
+    }
+    //var url = BUGZILLA_URL + 'bug/' + bug_id + '/comment';
+    var url = 'http://localhost:8888/' + 'bug/' + bug_id + '/comment';
+    if (params.id !== bug_id) {
+      params.id = bug_id;
+    }
+    console.log("BUGZILLA URL", url);
+    return $http.post(url, params);
+  }
+
+  function putUpdate(bug_id, params) {
+    if ($scope.auth_token) {
+      params.token = $scope.auth_token;
+    }
+    //var url = BUGZILLA_URL + 'bug/' + bug_id + '/comment';
+    var url = 'http://localhost:8888/' + 'bug/' + bug_id;
+    if (!params.ids || (params.ids && !_.contains(params.ids, bug_id))) {
+      params.ids = [bug_id];
+    }
+    console.log("BUGZILLA URL", url);
+    return $http.put(url, params);
+  }
+
+  var _lock_post_queue = false;
+  function clearPostQueue(callback) {
+    console.log('Clearing', $scope.post_queue);
+    // we first need to count how many posts we need to do
+    // '$scope.post_queue' is an object so to get a count of it we need to
+    // use an iterator
+    var count_bugs = 0;
+    _.each($scope.post_queue, function() {
+      count_bugs++;
+    });
+    _.each($scope.post_queue, function(posts, bug_id, index) {
+      count_bugs--;
+      var count_posts = posts.length;
+      _.each(posts, function(post) {
+        console.log('POST', post);
+
+        // we need to keep track of how many things we have to do
+        // so we know when to execute a callback
+        var things_to_do = 0;
+        if (post.status) things_to_do++;
+        if (post.comment) things_to_do++;
+
+        if (post.status) {
+
+          var params = {
+            'ids': [bug_id],
+            'status': post.status,
+            'resolution': post.resolution
+          };
+          putUpdate(bug_id, params)
+            .success(function(data, status) {
+              console.log('YAY! PUT WORKED');
+              console.log(data);
+              $scope.is_offline = false;
+              $scope.post_queue[bug_id] = _.filter($scope.post_queue[bug_id], function(p) {
+                return p._when !== post._when;
+              });
+            }).error(function(data, status) {
+              console.warn('Unable to put update', data);
+              if (status === 0) $scope.is_offline = true;
+            }).finally(function() {
+              count_posts--;
+              things_to_do--;
+              if (!things_to_do && !count_posts && !count_posts) {
+                console.log('Finally callback');
+                localForage.setItem('post_queue', $scope.post_queue);
+                if (callback) callback();
+              }
+            });
+        } else if (post.comment) {
+          var params = {
+            'id': bug_id,
+            'comment': post.comment,
+          };
+          postComment(bug_id, params)
+            .success(function(data, status) {
+              $scope.is_offline = false;
+              console.log('YAY! POST COMMENT WORKED');
+              console.log(data);
+              $scope.post_queue[bug_id] = _.filter($scope.post_queue[bug_id], function(p) {
+                return p._when !== post._when;
+              });
+            }).error(function(data, status) {
+              console.warn('Unable to post comment', data);
+              console.warn(status);
+              //post._error = data;
+              $scope.post_queue[bug_id] = _.map($scope.post_queue[bug_id], function(p) {
+                if (p._when === post._when) {
+                  p._error = data;
+                }
+                return p;
+              });
+              //$scope.post_queue[bug_id].push(post);
+              if (status === 0) $scope.is_offline = true;
+            }).finally(function() {
+              count_posts--;
+              things_to_do--;
+              if (!things_to_do && !count_posts && !count_posts) {
+                console.log('Finally callback');
+                localForage.setItem('post_queue', $scope.post_queue);
+                if (callback) callback();
+              }
+            });
+        }
+      });
+    });
+    if (!count_bugs && callback) {
+      console.log('Callback immediately');
+      callback();
+    }
+  }
+
+  function clearEmptyBugs(post_queue) {
+    var new_post_queue = {};
+    _.each(post_queue, function(posts, bug_id) {
+      if (posts.length) {
+        new_post_queue[bug_id] = posts;
+      }
+    });
+    return new_post_queue;
+  }
+
+  $scope.getBugPostQueue = function(bug_id) {
+    return $scope.post_queue[bug_id] || [];
+  };
+
+  $interval(function() {
+    if (!_lock_post_queue) {
+      _lock_post_queue = true;
+      clearPostQueue(function() {
+        _lock_post_queue = false;
+      });
+    }
+  }, CLEAR_POST_QUEUE_FREQUENCY * 1000);
 
 }]);
 
