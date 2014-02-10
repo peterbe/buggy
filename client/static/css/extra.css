@@ -340,3 +340,41 @@ dialog::backdrop {
     display: none !important;
     visibility: hidden !important;
 }
+
+.post-comment {
+    margin-top: 20px;
+}
+.post-comment form {
+    margin-bottom: 20px;
+}
+.post-comment textarea {
+    width: 100%;
+    height: 90px;
+}
+.post-queue-item {
+    margin-top: 1em;
+}
+.post-queue-item p {
+    margin: 0.2em 0;
+}
+.post-queue-item p.error {
+    color: red;
+}
+
+.button-small {
+    font-size: 85%;
+}
+.button-xsmall {
+    font-size: 70%;
+}
+.post-comment .cancel {
+    float: right;
+}
+
+.pure-button {
+    border-radius: 4px;
+}
+
+/* doing this so that the the .post-comment block can be grey */
+body, .post-comment { background-color: #efefef; }
+#list, #main { background-color: #fff; }

@@ -3,8 +3,6 @@ TODO
 
 * Add ability to "Star" bugs
 
-* Ability to post comments
-
 * Support ngAnimate
   http://docs.angularjs.org/tutorial/step_12
 
@@ -94,3 +92,5 @@ DONE
 * Keyboard shortcuts for listing up and down
 
 * Small summary of bug at the top when scrolled down
+
+* Ability to post comments
