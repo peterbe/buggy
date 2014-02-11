@@ -208,6 +208,20 @@ which you can find here::
                 <input ng-model="email" type="text" placeholder="email@example.com">
                 <button class="pure-button secondary-button">Search</button>
               </form>
+  	      <table class="pure-table" ng-class="{hidden: !found_products.length}" style="margin-top:5px">
+  	        <thead>
+		  <tr>
+		    <th>Product &amp; Component</th>
+		    <th>&nbsp;</th>
+		  </tr>
+		</thead>
+		<tbody>
+		  <tr ng-repeat="combo in found_products">
+		    <td>{{ combo }}</td>
+		    <td><a href="#" ng-click="addProductCombo(combo)" class="pure-button button-xsmall">+</a></td>
+		  </tr>
+		</tbody>
+	      </table>
             </div><!-- / products & components -->
 
             <div class="email-content-body">

@@ -95,3 +95,6 @@ DONE
 * Small summary of bug at the top when scrolled down
 
 * Ability to post comments
+
+* Searching for products & components by email uses a search result
+  now instead of immediately putting them into $scope.products

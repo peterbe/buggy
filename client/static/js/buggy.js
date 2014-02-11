@@ -810,6 +810,8 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     return $scope.bugs.length > $scope.list_limit;
   };
 
+
+  $scope.found_products = [];
   function findProductsByEmail(email, callback, error_callback) {
     var params = {
       include_fields: 'product,component',
@@ -822,10 +824,13 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
         $scope.is_offline = false;
         _.each(data.bugs, function(bug) {
           var combo = bug.product + ' :: ' + bug.component;
-          if (!_.contains($scope.products, combo)) {
-            $scope.products.push(combo);
+          if (!_.contains($scope.found_products, combo)) {
+            $scope.found_products.push(combo);
           }
         });
+        $timeout(function() {
+          $scope.found_products = [];
+        }, 60 * 1000);
         if (callback) callback();
       }).error(function(data, status, headers, config) {
         console.warn('Failure to fetchBugs');
@@ -851,10 +856,6 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       startLoading('Finding Products & Components');
       findProductsByEmail(this.email, function() {
         stopLoading();
-        if ($scope.products.length) {
-          localForage.setItem('products', $scope.products);
-          $scope.products_changed = true;
-        }
       }, function() {
         // error callback
         stopLoading();
@@ -885,6 +886,18 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     localForage.setItem('products', $scope.products);
     $scope.products_changed = true;
     $scope.search_products = '';
+  };
+
+  $scope.addProductCombo = function(combo) {
+    if (!_.contains($scope.products, combo)) {
+      $scope.products.push(combo);
+      if (_.contains($scope.found_products, combo)) {
+        $scope.found_products = _.filter($scope.found_products, function(c) {
+          return c !== combo;
+        });
+      }
+      $scope.products_changed = true;
+    }
   };
 
   var _downloading_configuration = false;  // used to prevent onFocus on fire repeatedly
@@ -1701,7 +1714,7 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
 
   var _lock_post_queue = false;
   function clearPostQueue(callback) {
-    console.log('Clearing', $scope.post_queue);
+    //console.log('Clearing', $scope.post_queue);
     // we first need to count how many posts we need to do
     // '$scope.post_queue' is an object so to get a count of it we need to
     // use an iterator
