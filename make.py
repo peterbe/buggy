@@ -17,7 +17,7 @@ build_regex = re.compile(
 )
 src_regex = re.compile('src=["\']([^"\']+)["\']')
 href_regex = re.compile('href=["\']([^"\']+)["\']')
-
+html_comment_regex = re.compile('<\!--.*?-->', re.MULTILINE | re.DOTALL)
 
 def _find_html_pages(source):
     paths = []
@@ -103,7 +103,8 @@ class Page(object):
 
     def __init__(self, path, source_directory, output_directory,
                  compress_js=True, compress_css=True,
-                 inline_js=False, inline_css=True):
+                 inline_js=False, inline_css=True,
+                 remove_html_comments=False):
         self.path = path
         self.source_directory = source_directory
         if not output_directory.endswith('/'):
@@ -113,6 +114,7 @@ class Page(object):
         self.compress_css = compress_css
         self.inline_js = inline_js
         self.inline_css = inline_css
+        self.remove_html_comments = remove_html_comments
         self.processed_files = [path]
 
     def _parse_html(self):
@@ -196,6 +198,18 @@ class Page(object):
                     tag_template % destination_path
                 )
 
+        if self.remove_html_comments:
+            def comment_replacer(match):
+                group = match.group()
+                beginning = group[len('<!--'):].strip()
+                if beginning.startswith('!'):
+                    return group.replace('<!--!', '<!--')
+                return ''
+
+            content = html_comment_regex.sub(comment_replacer, content)
+        else:
+            content = content.replace('<!--!', '<!--')
+
         return content
 
     def parse(self):
@@ -227,7 +241,8 @@ def run(
         output_directory='./dist',
         wipe_first=False,
         inline_js=False,
-        inline_css=False
+        inline_css=False,
+        remove_html_comments=False,
     ):
 
     if wipe_first:
@@ -238,8 +253,12 @@ def run(
     processed_files = []
     for html_file in _find_html_pages(source_directory):
         page = Page(
-            html_file, source_directory, output_directory,
-            inline_js=inline_js, inline_css=inline_css
+            html_file,
+            source_directory,
+            output_directory,
+            inline_js=inline_js,
+            inline_css=inline_css,
+            remove_html_comments=remove_html_comments,
         )
         page.parse()
         processed_files.extend(page.processed_files)
@@ -270,6 +289,13 @@ if __name__ == '__main__':
         action='store_true'
     )
     parser.add_argument(
+        '--remove-html-comments',
+        help='Removes all HTML comments',
+        default=False,
+        dest='remove_html_comments',
+        action='store_true'
+    )
+    parser.add_argument(
         '--inline-css',
         help='Make all CSS inline',
         default=False,
@@ -290,4 +316,5 @@ if __name__ == '__main__':
         wipe_first=args.wipe_first,
         inline_js=args.inline_js,
         inline_css=args.inline_css,
+        remove_html_comments=args.remove_html_comments,
     )
