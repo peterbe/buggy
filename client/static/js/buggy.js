@@ -10,8 +10,8 @@ var D = function() { console.dir.apply(console, arguments); };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
-var FETCH_NEW_BUGS_FREQUENCY = 400;
-var FETCH_CHANGED_BUGS_FREQUENCY = 450;console.log("DEBUG MODE");
+var FETCH_NEW_BUGS_FREQUENCY = 40;
+var FETCH_CHANGED_BUGS_FREQUENCY = 45
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 var CLEAR_POST_QUEUE_FREQUENCY = 10;
 
