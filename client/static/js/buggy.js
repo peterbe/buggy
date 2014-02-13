@@ -10,8 +10,8 @@ var D = function() { console.dir.apply(console, arguments); };
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
-var FETCH_NEW_BUGS_FREQUENCY = 40;
-var FETCH_CHANGED_BUGS_FREQUENCY = 45;
+var FETCH_NEW_BUGS_FREQUENCY = 400;
+var FETCH_CHANGED_BUGS_FREQUENCY = 450;console.log("DEBUG MODE");
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 var CLEAR_POST_QUEUE_FREQUENCY = 10;
 
@@ -275,7 +275,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
                 // all callbacks for all products and bugs have returned
                 console.log("Storing a list of ", bug_ids.length, "bugs");
                 localForage.setItem('bugs', bug_ids);
-                reCountBugsByStatus();
+                reCountBugsByStatus($scope.bugs);
                 $scope.$apply();
                 if (callback) {
                   $scope.$apply(callback);
@@ -307,20 +307,22 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       //console.log('Success');
       $scope.is_offline = false;
       logDataDownloaded(data);
-        //console.dir(data);
+      console.log("FETCHED BUG DATA", data);
       if (data.bugs.length) {
-        var bug = data.bugs[0];
+        var new_bug = data.bugs[0];
+        //console.log('NEW BUG', bug);
         _.each($scope.bugs, function(old_bug, index) {
-          if (old_bug.id === bug.id) {
-            bug.comments = old_bug.comments;
-            bug.extract = old_bug.extract;
-            bug.history = old_bug.history;
-            bug.unread = old_bug.unread;
-            $scope.bugs[index] = bug;
+          if (old_bug.id === new_bug.id) {
+            //console.log('Now found the bug');
+            new_bug.comments = old_bug.comments;
+            new_bug.extract = old_bug.extract;
+            new_bug.history = old_bug.history;
+            new_bug.unread = old_bug.unread;
+            $scope.bugs[index] = new_bug;
           }
         });
         // update the local storage too
-        localForage.setItem(bug.id, bug);
+        localForage.setItem(bug_id, new_bug);
       }
       if (callback) callback();
     }).error(function(data, status, headers, config) {
@@ -400,7 +402,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     }
     var url = BUGZILLA_URL + 'bug/' + id + '/attachment';
     url += '?' + serializeObject(params);
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
 
@@ -790,9 +792,16 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   $scope.refreshBug = function(bug) {
     startLoading('Refreshing bug and its comments');
     fetchAndUpdateBug(bug, function() {
+      console.log('Afterwards bug.status=', bug.status, ' $scope.bug.status=', $scope.bug.status);
       fetchAndUpdateComments(bug, function() {
-        $scope.bug = bug;
-        stopLoading();
+        bug.things = $scope.getThings(bug);
+        fetchAndUpdateHistory(bug, function() {
+          bug.things = $scope.getThings(bug);
+          fetchAndUpdateAttachments(bug, function() {
+            bug.things = $scope.getThings(bug);
+            stopLoading();
+          });
+        });
       });
     });
   };
@@ -1587,7 +1596,7 @@ app.directive("scrolling", function () {
   };
 });
 
-app.controller('BugController', ['$scope', '$interval', '$http', function($scope, $interval, $http) {
+app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', function($scope, $interval, $http, $timeout) {
 
   $scope.at_top = true;
   $scope.at_bottom = false;
@@ -1607,7 +1616,7 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
   $scope.changeable_statuses = ['CONFIRMED', 'RESOLVED'];
   $scope.changeable_resolutions = [];
   $scope.$watch('bug', function(bug) {
-    console.log("Changed to", bug.status);
+    //console.log("Changed to", bug.status);
     if (bug.status === 'NEW') {
       $scope.changeable_statuses = ['UNCONFIRMED', 'ASSIGNED', 'RESOLVED'];
     } else if (bug.status === 'UNCONFIRMED') {
@@ -1695,7 +1704,7 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
     if (params.id !== bug_id) {
       params.id = bug_id;
     }
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.post(url, params);
   }
 
@@ -1703,12 +1712,12 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
     if ($scope.auth_token) {
       params.token = $scope.auth_token;
     }
-    var url = BUGZILLA_URL + 'bug/' + bug_id + '/comment';
+    var url = BUGZILLA_URL + 'bug/' + bug_id;
     //var url = 'http://localhost:8888/' + 'bug/' + bug_id;
     if (!params.ids || (params.ids && !_.contains(params.ids, bug_id))) {
       params.ids = [bug_id];
     }
-    console.log("BUGZILLA URL", url);
+    //console.log("BUGZILLA URL", url);
     return $http.put(url, params);
   }
 
@@ -1727,16 +1736,16 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
       count_bugs--;
       var count_posts = posts.length;
       _.each(posts, function(post) {
-        console.log('POST', post);
+        console.log('THING TO POST', post);
 
         // we need to keep track of how many things we have to do
         // so we know when to execute a callback
         var things_to_do = 0;
         if (post.status) things_to_do++;
         if (post.comment) things_to_do++;
+        L('things_to_do', things_to_do);
 
         if (post.status) {
-
           params = {
             'ids': [bug_id],
             'status': post.status,
@@ -1746,23 +1755,30 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
             .success(function(data, status) {
               console.log('YAY! PUT WORKED');
               console.log(data);
+
               $scope.is_offline = false;
               $scope.post_queue[bug_id] = _.filter($scope.post_queue[bug_id], function(p) {
                 return p._when !== post._when;
               });
+              if ($scope.bug.id === parseInt(bug_id)) {
+                // this is the currently chosen bug
+                $scope.refreshBug($scope.bug);
+              }
             }).error(function(data, status) {
               console.warn('Unable to put update', data);
               if (status === 0) $scope.is_offline = true;
             }).finally(function() {
               count_posts--;
               things_to_do--;
-              if (!things_to_do && !count_posts && !count_posts) {
-                console.log('Finally callback');
+              if (!things_to_do && count_posts <= 0 && !count_bugs) {
+                //console.log('Finally callback');
                 localForage.setItem('post_queue', $scope.post_queue);
                 if (callback) callback();
               }
             });
-        } else if (post.comment) {
+        }
+
+        if (post.comment) {
           params = {
             'id': bug_id,
             'comment': post.comment,
@@ -1775,6 +1791,10 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
               $scope.post_queue[bug_id] = _.filter($scope.post_queue[bug_id], function(p) {
                 return p._when !== post._when;
               });
+              if ($scope.bug.id === parseInt(bug_id)) {
+                // this is the currently chosen bug
+                $scope.refreshBug($scope.bug);
+              }
             }).error(function(data, status) {
               console.warn('Unable to post comment', data);
               console.warn(status);
@@ -1790,8 +1810,8 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
             }).finally(function() {
               count_posts--;
               things_to_do--;
-              if (!things_to_do && !count_posts && !count_posts) {
-                console.log('Finally callback');
+              if (!things_to_do && count_posts <= 0 && !count_bugs) {
+                //console.log('Finally callback');
                 localForage.setItem('post_queue', $scope.post_queue);
                 if (callback) callback();
               }
@@ -1800,7 +1820,7 @@ app.controller('BugController', ['$scope', '$interval', '$http', function($scope
       });
     });
     if (!count_bugs && callback) {
-      console.log('Callback immediately');
+      //console.log('Callback immediately');
       callback();
     }
   }
