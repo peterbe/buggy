@@ -6,6 +6,7 @@ import hashlib
 import os
 import re
 import shutil
+import subprocess
 
 import cssmin
 import jsmin
@@ -57,6 +58,10 @@ def mkdir(newdir):
         mkdir(head)
     if tail:
         os.mkdir(newdir)
+
+
+def get_git_revision():
+    return subprocess.check_output('git rev-parse HEAD'.split()).strip()
 
 
 def already_minified(filename):
@@ -205,10 +210,15 @@ class Page(object):
                 if beginning.startswith('!'):
                     return group.replace('<!--!', '<!--')
                 return ''
-
             content = html_comment_regex.sub(comment_replacer, content)
         else:
             content = content.replace('<!--!', '<!--')
+
+        if '$git_revision' in content:
+            content = content.replace(
+                '$git_revision',
+                get_git_revision()
+            )
 
         return content
 
