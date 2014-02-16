@@ -66,6 +66,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   $scope.bugs = [];
   $scope.in_config = false;
   $scope.in_about = false;
+  $scope.in_charts = false;
   $scope.email = '';
   $scope.auth_token = null;
   $scope.is_offline = false;
@@ -213,6 +214,19 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       $scope.in_config = false;
     }
     $scope.in_about = ! $scope.in_about;
+  };
+
+  $scope.toggleCharts = function() {
+    if (!$scope.in_charts) {
+      if ($scope.in_config) {
+        $scope.in_config = false;
+      }
+      if ($scope.in_about) {
+        $scope.in_about = false
+      }
+      console.log('Opening charts');
+    }
+    $scope.in_charts = ! $scope.in_charts;
   };
 
   function fetchAuthToken(params) {
@@ -1895,10 +1909,85 @@ app.controller('ConfigController', ['$scope', function($scope) {
     return text;
   };
 
-}]);
+}]);  // end ConfigController
 
 
+app.controller('ChartsController', ['$scope', function($scope) {
 
+  function getChartData() {
+    var statuses = {};
+    // we're only interested in some products
+    var any = {};
+    var only_product_combos = $scope.products;
+    var grouping = $scope.number_bugs_charts_group;
+    _.each($scope.bugs, function(bug) {
+      var status = bug.status;
+      if (grouping === 'simple') {
+        if (_.contains(['UNCONFIRMED', 'NEW', 'ASSIGNED', 'REOPENED'], status)) {
+          status = 'OPEN';
+        } else {
+          status = 'CLOSED';
+        }
+      }
+      var bucket = statuses[status] || {};
+      var combo = bug.product + ' :: ' + bug.component;
+      if (!_.contains(only_product_combos, combo)) return;
+      any[status] = 1;
+      var count = bucket[combo] || 0;
+      bucket[combo] = count + 1;
+      statuses[status] = bucket;
+    });
+    var status_keys = ['UNCONFIRMED', 'NEW', 'ASSIGNED', 'REOPENED', 'RESOLVED', 'VERIFIED', 'CLOSED'];
+    if (grouping === 'simple') {
+      status_keys = ['OPEN', 'CLOSED'];
+    } else {
+      status_keys = _.filter(status_keys, function(k) { return any[k] });
+    }
+    var values = _.map(status_keys, function(status) {
+      var bucket = statuses[status];
+      if (typeof bucket === 'undefined') bucket = {};
+      var vs = _.map(only_product_combos, function(combo) {
+        return {x: combo, y: bucket[combo] || 0};
+      });
+      return {
+        key: status,
+        values: vs
+      }
+    });
+    return values;
+  }
+  function drawChart() {
+    nv.addGraph(function() {
+      //var chart = nv.models.discreteBarChart()
+      var chart = nv.models.multiBarChart()
+          //.x(function(d) { return d.label })    //Specify the data accessors.
+          //.y(function(d) { return d.value })
+          //.x(function(d) { return d.label })    //Specify the data accessors.
+          //.y(function(d) { return d.value })
+          .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
+          .tooltips(true)        //Don't show tooltips
+          //.showValues(true)       //...instead, show the bar value right on top of each bar.
+          .transitionDuration(100)
+          .stacked(true)
+          ;
+      chart.yAxis
+                .tickFormat(d3.format(',f'));
+      d3.select('#number_bugs_chart svg')
+          .datum(getChartData())
+          .call(chart);
+      nv.utils.windowResize(chart.update);
+      return chart;
+    });
+  }
+  $scope.$watch('in_charts', function(value) {
+    if (value) {
+      drawChart();
+    }
+  });
+  $scope.number_bugs_charts_group = 'all';
+  $scope.$watch('number_bugs_charts_group', drawChart);
+
+}]);  // end ChartsController
 
 // for debugging purposes only
 function forgetBug(id) {

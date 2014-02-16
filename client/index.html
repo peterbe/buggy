@@ -22,6 +22,7 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
 <!-- build:css _cache/combined-$hash.min.css -->
 <link rel="stylesheet" href="static/css/vendor/dialog-polyfill.css">
 <link rel="stylesheet" href="static/css/vendor/pure-min.css">
+<link rel="stylesheet" href="static/css/vendor/nv.d3.min.css">
 <link rel="stylesheet" href="static/css/email.css">
 <link rel="stylesheet" href="static/css/extra.css">
 <!-- endbuild -->
@@ -71,6 +72,7 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
 
                     <li class="pure-menu-heading">Options</li>
                     <li><a href="#" ng-click="toggleConfig()">Config</a></li>
+                    <li><a href="#" ng-click="toggleCharts()">Charts</a></li>
 
 		    <li><a href="#" ng-click="refreshBugs()" title="Ignore locally stored data and re-fetches from Bugzilla">Refresh List</a></li>
 		    <li><a href="#" ng-click="reDownloadSomeComments()" title="Impatiently downloads more bug comments in the background">Download More</a></li>
@@ -165,6 +167,80 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
     </div>
 
     <div class="pure-u-1" id="main">
+
+        <div class="email-content" ng-if="!bug.empty && in_about">
+            <div class="email-content-header pure-g">
+                <div class="pure-u-2-3">
+                    <h1 class="email-content-title">About This App</h1>
+                </div>
+                <div class="pure-u-1-3">
+                    <p style="text-align: right"><a href="#" ng-click="toggleAbout()">Close</a></p>
+                </div>
+            </div>
+            <div class="email-content-body">
+       	    <p>
+              Project can be forked on Github:
+              <a href="https://github.com/peterbe/buggy" target="_blank" style="font-weight: bold">github.com/peterbe/buggy</a>
+            </p>
+            </div>
+            <div class="email-content-body">
+              <h2>Keyboard Shortcuts</h2>
+              <table class="pure-table keyboard-shortcuts">
+                <thead>
+                  <tr>
+                    <th>What</th>
+                    <th>Happens</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="text-align:center"><code>/</code></td>
+                    <td>Focus on <b>search</b></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align:center"><code>j</code></td>
+                    <td>Select <b>next</b> bug in the list</td>
+                  </tr>
+                  <tr>
+                    <td style="text-align:center"><code>k</code></td>
+                    <td>Select <b>previous</b> bug in the list</td>
+                  </tr>
+                </tbody>
+              </table>
+	    </div>
+	</div><!-- /about -->
+
+        <div class="email-content" ng-if="!bug.empty && in_charts" ng-controller="ChartsController">
+          <div>
+            <div class="email-content-header pure-g">
+                <div class="pure-u-2-3">
+                    <h1 class="email-content-title">Charts</h1>
+                </div>
+                <div class="pure-u-1-3">
+                    <p style="text-align: right"><a href="#" ng-click="toggleCharts()">Close</a></p>
+                </div>
+            </div>
+            <div class="email-content-body">
+              <div id="number_bugs_chart" class="chart">
+                <h4>Number of Bugs by Product &amp; Component</h4>
+                <svg style="height:550px"></svg>
+                <form class="pure-form">
+                  <p>
+                    Group by by:
+                    <label for="number_bugs_charts_g1" class="pure-radio">
+                      <input id="number_bugs_charts_g1" type="radio" name="group" ng-model="number_bugs_charts_group" value="all">
+                      Individual statuses
+                    </label>
+                    <label for="number_bugs_charts_g2" class="pure-radio">
+                      <input id="number_bugs_charts_g2" type="radio" name="group" ng-model="number_bugs_charts_group" value="simple">
+                      Open/Closed
+                    </label>
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+	</div><!-- /charts -->
 
         <div ng-if="in_config" ng-controller="ConfigController">
             <div class="email-content-header pure-g">
@@ -280,7 +356,7 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
 
         </div><!-- /in_config -->
 
-        <div class="email-content" ng-if="bug.empty && !in_config">
+        <div class="email-content" ng-if="bug.empty && !in_config && !in_about && !in_charts">
           <div class="email-content-header pure-g">
             <div class="pure-u-1-2">
               <h1 class="email-content-title">Nothing selected</h1>
@@ -299,7 +375,7 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
 
       	<div id="top"></div>
 
-        <div class="email-content" ng-if="!bug.empty && !in_config && !in_about" scrolling ng-controller="BugController">
+        <div class="email-content" ng-if="!bug.empty && !in_config && !in_about && !in_charts" scrolling ng-controller="BugController">
 	         <div class="scrolling">
             <p>
   	        <a href="#bottom" ng-click="gotoBottom()" ng-class="{hidden: at_bottom}">&darr; Bottom</a>
@@ -451,48 +527,6 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
             </div>
         </div><!-- /!bug -->
 
-        <div class="email-content" ng-if="!bug.empty && in_about">
-            <div class="email-content-header pure-g">
-                <div class="pure-u-2-3">
-                    <h1 class="email-content-title">About This App</h1>
-                </div>
-                <div class="pure-u-1-3">
-                    <p style="text-align: right"><a href="#" ng-click="toggleAbout()">Close</a></p>
-                </div>
-            </div>
-            <div class="email-content-body">
-        	    <p>
-              Project can be forked on Github:
-              <a href="https://github.com/peterbe/buggy" target="_blank" style="font-weight: bold">github.com/peterbe/buggy</a>
-            </p>
-            </div>
-            <div class="email-content-body">
-              <h2>Keyboard Shortcuts</h2>
-              <table class="pure-table keyboard-shortcuts">
-                <thead>
-                  <tr>
-                    <th>What</th>
-                    <th>Happens</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style="text-align:center"><code>/</code></td>
-                    <td>Focus on <b>search</b></td>
-                  </tr>
-                  <tr>
-                    <td style="text-align:center"><code>j</code></td>
-                    <td>Select <b>next</b> bug in the list</td>
-                  </tr>
-                  <tr>
-                    <td style="text-align:center"><code>k</code></td>
-                    <td>Select <b>previous</b> bug in the list</td>
-                  </tr>
-                </tbody>
-              </table>
-	    </div>
-	</div><!-- /about -->
-
     </div>
 
     <div class="notice loading pure-u ng-hide" ng-show="loading">
@@ -534,6 +568,8 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
 <script src="static/js/vendor/moment.min.js"></script>
 <script src="static/js/vendor/filesize.min.js"></script>
 <script src="static/js/vendor/howler.min.js"></script>
+<script src="static/js/vendor/d3.v3.min.js"></script>
+<script src="static/js/vendor/nv.d3.min.js"></script>
 <!-- endbuild -->
 
 <!-- build:js _cache/bundle-$hash.min.js -->
@@ -542,6 +578,8 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
 <script src="static/js/utils.js"></script>
 <script src="static/js/buggy.js"></script>
 <!-- endbuild -->
+
+
 
 <script>var POP_SOUNDS = ['static/sounds/pop.mp3', 'static/sounds/pop.ogg'];</script>
 

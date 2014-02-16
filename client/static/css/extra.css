@@ -378,3 +378,7 @@ dialog::backdrop {
 /* doing this so that the the .post-comment block can be grey */
 body, .post-comment { background-color: #efefef; }
 #list, #main { background-color: #fff; }
+
+.chart .pure-form label {
+    display: inline;
+}
