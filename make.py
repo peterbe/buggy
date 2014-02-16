@@ -13,7 +13,7 @@ import jsmin
 
 
 build_regex = re.compile(
-    '(<\!--\s*build:(\w+)\s+([\w\$\-\./]+)\s*-->(.*?)<\!--\s*endbuild\s-->)',
+    '(<\!--\s*build:(\w+)\s+([\w\$\-\./]*)\s*-->(.*?)<\!--\s*endbuild\s-->)',
     re.MULTILINE | re.DOTALL
 )
 src_regex = re.compile('src=["\']([^"\']+)["\']')
@@ -126,11 +126,15 @@ class Page(object):
         content = read(self.path)
         for whole, type_, destination_name, bulk in build_regex.findall(content):
 
-            output_directory = self.output_directory
-            output_directory = os.path.join(
-                output_directory,
-                os.path.dirname(destination_name)
-            )
+            if type_ == 'remove':
+                content = content.replace(whole, '')
+                continue
+            else:
+                output_directory = self.output_directory
+                output_directory = os.path.join(
+                    output_directory,
+                    os.path.dirname(destination_name)
+                )
 
             combined = []
             template = None

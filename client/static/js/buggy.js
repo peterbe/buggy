@@ -1,6 +1,6 @@
 /* global _, localForage, Howl, console, get_gravatar, serializeObject, filesize, document,
    POP_SOUNDS, isAllDigits, window, angularForage, angular, alert, moment,
-   setTimeout, showCloakDialog, closeCloakDialog, escapeRegExp */
+   setTimeout, showCloakDialog, closeCloakDialog, escapeRegExp, DEBUG */
 
 
 
@@ -8,10 +8,17 @@
 var L = function() { console.log.apply(console, arguments); };
 var D = function() { console.dir.apply(console, arguments); };
 
+if (typeof DEBUG === 'undefined') DEBUG = false;
+
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
 var FETCH_NEW_BUGS_FREQUENCY = 40;
 var FETCH_CHANGED_BUGS_FREQUENCY = 45
+if (DEBUG) {
+  FETCH_NEW_BUGS_FREQUENCY *= 10;
+  FETCH_CHANGED_BUGS_FREQUENCY *= 10;
+  console.warn("NB! In DEBUG mode");
+}
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 var CLEAR_POST_QUEUE_FREQUENCY = 10;
 
