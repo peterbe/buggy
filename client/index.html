@@ -144,6 +144,11 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
           <div ng-if="!filtered_bugs.length && products.length" class="email-item">
             <p>Filtered too much?</p>
 
+            <p ng-if="search_q">
+              Matching only: <code>{{ search_q }}</code>.
+              <a href="#" ng-click="clearSearch()">Reset</a>
+            </p>
+
             <p ng-if="product_filters.length">
               You've filtered by:<br><b>{{ product_filters.join(', ') }}</b>.
               <a href="#" ng-click="filterByProduct('ALL')">Reset</a>
