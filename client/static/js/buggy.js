@@ -658,6 +658,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     }
     $scope.in_config = false; // just in case
     $scope.in_about = false; // just in case
+    $scope.in_charts = false; // just in case
     bug.empty = false;
     bug.unread = false;
     bug.is_changed = false;
