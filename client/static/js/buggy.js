@@ -1380,7 +1380,7 @@ app.controller('ListController',
   // $scope.product_filters = [];
 
   $scope.show_product_filters = false;
-  $scope.$watch('product_filters.length', function() {
+  $scope.$watchCollection('product_filters', function() {
     $scope.show_product_filters = false;
   });
 
@@ -1995,7 +1995,7 @@ app.controller('ChartsController', ['$scope', function($scope) {
   });
   $scope.number_bugs_charts_group = 'all';
   $scope.$watch('number_bugs_charts_group', drawChart);
-  $scope.$watch('product_filters.length', drawChart);
+  $scope.$watchCollection('product_filters', drawChart);
 
 }]);  // end ChartsController
 
