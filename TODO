@@ -98,3 +98,5 @@ DONE
 
 * Searching for products & components by email uses a search result
   now instead of immediately putting them into $scope.products
+
+* Changing product filters updates the charts immediately

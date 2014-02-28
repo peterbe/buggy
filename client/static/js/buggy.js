@@ -77,6 +77,12 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       $scope.selected_statuses = value;
     }
   });
+  $scope.product_filters = [];
+  angularForage.getItem($scope, 'product_filters', function(value) {
+    if (value) {
+      $scope.product_filters = value;
+    }
+  });
   angularForage.getItem($scope, 'auth_token', function(value) {
     if (value) {
       $scope.auth_token = value;
@@ -1343,6 +1349,21 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     }
   }
 
+  $scope.filterByProduct = function(product) {
+    if (product === 'ALL') {
+      $scope.product_filters = [];
+    } else if (_.contains($scope.product_filters, product)) {
+      $scope.product_filters = _.filter($scope.product_filters, function(s) {
+        return s !== product;
+      });
+    } else if ($scope.product_filters.length === $scope.products.length -1) {
+      $scope.product_filters = [];
+    } else {
+      $scope.product_filters.push(product);
+    }
+    localForage.setItem('product_filters', $scope.product_filters);
+  };
+
 }
 
 
@@ -1356,35 +1377,18 @@ app.controller('ListController',
   $scope.search_q = '';  // the variable used for filtering
   $scope.in_search = false;
   $scope.list_limit = 100;
-  $scope.product_filters = [];
-  angularForage.getItem($scope, 'product_filters', function(value) {
-    if (value) {
-      $scope.product_filters = value;
-    }
-  });
+  // $scope.product_filters = [];
 
   $scope.show_product_filters = false;
+  $scope.$watch('product_filters.length', function() {
+    $scope.show_product_filters = false;
+  });
+
   $scope.toggleShowProductFilters = function() {
     if (!$scope.show_product_filters) {
       // about to open it
     }
     $scope.show_product_filters = ! $scope.show_product_filters;
-  };
-
-  $scope.filterByProduct = function(product) {
-    if (product === 'ALL') {
-      $scope.product_filters = [];
-      $scope.show_product_filters = false;
-    } else if (_.contains($scope.product_filters, product)) {
-      $scope.product_filters = _.filter($scope.product_filters, function(s) {
-        return s !== product;
-      });
-    } else if ($scope.product_filters.length === $scope.products.length -1) {
-      $scope.product_filters = [];
-    } else {
-      $scope.product_filters.push(product);
-    }
-    localForage.setItem('product_filters', $scope.product_filters);
   };
 
   $scope.isSelectedProductFilter = function(product) {
@@ -1920,6 +1924,10 @@ app.controller('ChartsController', ['$scope', function($scope) {
     // we're only interested in some products
     var any = {};
     var only_product_combos = $scope.products;
+    if ($scope.product_filters.length) {
+      only_product_combos = $scope.product_filters;
+    }
+
     var grouping = $scope.number_bugs_charts_group;
     _.each($scope.bugs, function(bug) {
       var status = bug.status;
@@ -1987,6 +1995,7 @@ app.controller('ChartsController', ['$scope', function($scope) {
   });
   $scope.number_bugs_charts_group = 'all';
   $scope.$watch('number_bugs_charts_group', drawChart);
+  $scope.$watch('product_filters.length', drawChart);
 
 }]);  // end ChartsController
 
