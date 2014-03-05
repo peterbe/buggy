@@ -320,6 +320,8 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
               <input type="email" ng-model="email" placeholder="Email">
               <input type="password" ng-model="password" placeholder="Password">
               <button type="submit" class="pure-button pure-button-primary">Sign in</button>
+              <p>Note! The email and password is <i>not</i> sent to <script>document.write(location.protocol + '//' + location.hostname)</script>. It only gets sent to bugzilla.mozilla.org over <b>HTTPS</b>.
+              And it's not stored in your browser either. A token is, if the authentication is successful.</p>
             </form>
             <p ng-if="auth_token">
               You have successfully signed in. <a href="#" ng-click="clearAuthToken()">Sign out</a>
