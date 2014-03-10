@@ -334,7 +334,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       //console.log('Success');
       $scope.is_offline = false;
       logDataDownloaded(data);
-      console.log("FETCHED BUG DATA", data);
+      //console.log("FETCHED BUG DATA", data);
       if (data.bugs.length) {
         var new_bug = data.bugs[0];
         //console.log('NEW BUG', bug);
@@ -561,7 +561,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   // the very first thing to do
   angularForage.getItem($scope, 'products', function(value) {
     if (value) {
-      console.log("Stored products", value);
+      // console.log("Stored products", value);
       $scope.products = value;
       showCloakDialog('Loading bugs from local storage...');
       loadBugs(function() {
@@ -569,7 +569,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
           if (id) {
             angularForage.getItem($scope, id, function(bug) {
               if (bug) {
-                console.log('selected bug:', bug.id);
+                // console.log('selected bug:', bug.id);
                 $scope.selectBug(bug);
                 //$scope.bug = bug;
               } else {
@@ -820,7 +820,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   $scope.refreshBug = function(bug) {
     startLoading('Refreshing bug and its comments');
     fetchAndUpdateBug(bug, function() {
-      console.log('Afterwards bug.status=', bug.status, ' $scope.bug.status=', $scope.bug.status);
+      //console.log('Afterwards bug.status=', bug.status, ' $scope.bug.status=', $scope.bug.status);
       fetchAndUpdateComments(bug, function() {
         bug.things = $scope.getThings(bug);
         fetchAndUpdateHistory(bug, function() {
@@ -1683,8 +1683,8 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
   };
 
   $scope.submitUpdate = function() {
-    console.log('$scope.post_queue', $scope.post_queue);
-    console.log('this.comment', this.comment, '$scope.comment', $scope.comment);
+    //console.log('$scope.post_queue', $scope.post_queue);
+    //console.log('this.comment', this.comment, '$scope.comment', $scope.comment);
     var comment = this.comment || '';
     var status = this.status || '';
     var resolution = this.resolution || '';
@@ -1726,11 +1726,11 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
       params.token = $scope.auth_token;
     }
     var url = BUGZILLA_URL + 'bug/' + bug_id + '/comment';
-    //var url = 'http://localhost:8888/' + 'bug/' + bug_id + '/comment';
+    // var url = 'http://localhost:8888/' + 'bug/' + bug_id + '/comment';
     if (params.id !== bug_id) {
       params.id = bug_id;
     }
-    //console.log("BUGZILLA URL", url);
+    // console.log("BUGZILLA URL", url);
     return $http.post(url, params);
   }
 
@@ -1754,22 +1754,25 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
     // '$scope.post_queue' is an object so to get a count of it we need to
     // use an iterator
     var count_bugs = 0;
-    _.each($scope.post_queue, function() {
-      count_bugs++;
+    _.each($scope.post_queue, function(arr) {
+      if (arr.length) {
+        count_bugs++;
+      }
     });
+    var original_count_bugs = count_bugs;
     var params;
     _.each($scope.post_queue, function(posts, bug_id, index) {
       count_bugs--;
       var count_posts = posts.length;
       _.each(posts, function(post) {
-        console.log('THING TO POST', post);
+        //console.log('THING TO POST', post);
 
         // we need to keep track of how many things we have to do
         // so we know when to execute a callback
         var things_to_do = 0;
         if (post.status) things_to_do++;
         if (post.comment) things_to_do++;
-        L('things_to_do', things_to_do);
+        //L('things_to_do', things_to_do);
 
         if (post.status) {
           params = {
@@ -1797,7 +1800,7 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
               count_posts--;
               things_to_do--;
               if (!things_to_do && count_posts <= 0 && !count_bugs) {
-                //console.log('Finally callback');
+                // console.log('Finally callback after putUpdate');
                 localForage.setItem('post_queue', $scope.post_queue);
                 if (callback) callback();
               }
@@ -1809,17 +1812,29 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
             'id': bug_id,
             'comment': post.comment,
           };
+
           postComment(bug_id, params)
             .success(function(data, status) {
               $scope.is_offline = false;
-              console.log('YAY! POST COMMENT WORKED');
-              console.log(data);
-              $scope.post_queue[bug_id] = _.filter($scope.post_queue[bug_id], function(p) {
-                return p._when !== post._when;
-              });
-              if ($scope.bug.id === parseInt(bug_id)) {
-                // this is the currently chosen bug
-                $scope.refreshBug($scope.bug);
+              if (data.error)  {
+                console.warn("Actually unable to post comment", data);
+                $scope.post_queue[bug_id] = _.map($scope.post_queue[bug_id], function(p) {
+                  if (p._when === post._when) {
+                    p._error = data;
+                  }
+                  return p;
+                });
+              } else {
+                console.log('YAY! POST COMMENT WORKED');
+                console.log(data);
+
+                $scope.post_queue[bug_id] = _.filter($scope.post_queue[bug_id], function(p) {
+                  return p._when !== post._when;
+                });
+                if ($scope.bug.id === parseInt(bug_id)) {
+                  // this is the currently chosen bug
+                  $scope.refreshBug($scope.bug);
+                }
               }
             }).error(function(data, status) {
               console.warn('Unable to post comment', data);
@@ -1837,7 +1852,7 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
               count_posts--;
               things_to_do--;
               if (!things_to_do && count_posts <= 0 && !count_bugs) {
-                //console.log('Finally callback');
+                // console.log('Finally callback after postComment');
                 localForage.setItem('post_queue', $scope.post_queue);
                 if (callback) callback();
               }
@@ -1845,8 +1860,8 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
         }
       });
     });
-    if (!count_bugs && callback) {
-      //console.log('Callback immediately');
+    if (!original_count_bugs && callback) {
+      // console.log('Callback immediately');
       callback();
     }
   }
@@ -1871,6 +1886,8 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
       clearPostQueue(function() {
         _lock_post_queue = false;
       });
+    } else {
+      console.warn("clear post queue is locked");
     }
   }, CLEAR_POST_QUEUE_FREQUENCY * 1000);
 

@@ -19,18 +19,28 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class CommentHandler(BaseHandler):
     def post(self, bug_id):
-        sleep(3)
+        sleep(10)
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
         self.set_header("Access-Control-Allow-Headers", "*")
         self.set_header("Access-Control-Allow-Headers",
         "Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, Cache-Control")
         print self.request.body
-        if randint(1, 4) == 1:
+        if getattr(self.application, '_comments', None) is None:
+            self.application._comments = []
+        if self.request.body in self.application._comments:
+            self.set_status(500)
+            self.write({'error': 'Already posted that!'})
+            return
+        self.application._comments.append(self.request.body)
+        if 0 and randint(1, 4) == 1:
             self.set_status(400)
             self.write({'error': "Something terrible happened %s" % datetime.datetime.utcnow()})
         else:
-            self.write("Hello, POST %s" % bug_id)
+            if 0 and randint(1, 2) == 1:
+                self.write({'error': 'Something is crazy about bugzilla right now'})
+            else:
+                self.write("Hello, POST %s" % bug_id)
 
 
 class UpdateHandler(BaseHandler):
