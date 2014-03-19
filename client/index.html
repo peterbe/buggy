@@ -317,11 +317,16 @@ https://github.com/peterbe/buggy/compare/$git_revision...HEAD
 
             <div class="email-content-body">
             <form ng-submit="getAuthCookie()" class="pure-form" ng-if="!auth_token">
+              <p>
+                <b>Note!</b> The email and password is <i>never</i> sent to
+                <code><script>document.write(location.protocol + '//' + location.hostname)</script></code>.
+                It only ever gets sent to <code>bugzilla.mozilla.org</code> over <b>HTTPS</b>.
+                And it's not stored in your browser either. A token is, if the authentication is successful.
+              </p>
+
               <input type="email" ng-model="email" placeholder="Email">
               <input type="password" ng-model="password" placeholder="Password">
               <button type="submit" class="pure-button pure-button-primary">Sign in</button>
-              <p>Note! The email and password is <i>not</i> sent to <script>document.write(location.protocol + '//' + location.hostname)</script>. It only gets sent to bugzilla.mozilla.org over <b>HTTPS</b>.
-              And it's not stored in your browser either. A token is, if the authentication is successful.</p>
             </form>
             <p ng-if="auth_token">
               You have successfully signed in. <a href="#" ng-click="clearAuthToken()">Sign out</a>
