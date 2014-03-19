@@ -25,14 +25,6 @@ var CLEAR_POST_QUEUE_FREQUENCY = 10;
 var _INCLUDE_FIELDS = 'assigned_to,assigned_to_detail,product,component,creator,creator_detail,status,id,resolution,last_change_time,creation_time,summary';
 var _ALL_POSSIBLE_STATUSES = 'UNCONFIRMED,NEW,ASSIGNED,REOPENED,RESOLVED,VERIFIED,CLOSED'.split(',');
 var _ATTACHMENT_INCLUDE_FIELDS = 'id,summary,size,content_type,is_obsolete,creation_time,is_patch';
-// utils stuff
-function makeCommentExtract(comment, max_length) {
-  max_length = max_length || 75;
-  if (comment.text.length > max_length) {
-    return comment.text.substring(0, max_length - 1) + '\u2026';
-  }
-  return comment.text;
-}
 
 var app = angular.module('buggyApp', ['ngSanitize']);
 
@@ -228,7 +220,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
         $scope.in_config = false;
       }
       if ($scope.in_about) {
-        $scope.in_about = false
+        $scope.in_about = false;
       }
       console.log('Opening charts');
     }
@@ -263,6 +255,17 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     return bug.last_change_time;
   }
 
+  function pySplit(str, sep, num) {
+    var pieces = str.split(sep);
+    if (arguments.length < 3) {
+      return pieces;
+    }
+    if (pieces.length < num) {
+      return pieces;
+    }
+    return pieces.slice(0, num).concat(pieces.slice(num).join(sep));
+  }
+
   function fetchAndUpdateBugs(callback) {
     var _products_left = $scope.products.length;
     var bug_ids = [];
@@ -271,12 +274,10 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       var params = {
          include_fields: _INCLUDE_FIELDS
       };
-      //if (product_combo.split('::').length === 2) {
-        params.product = product_combo.split('::')[0].trim();
-        params.component = product_combo.split('::')[1].trim();
-      //} else {
-      //  params.product = product_combo.trim();
-      //}
+      var combo = pySplit(product_combo, '::', 1);
+      params.product = combo[0].trim();
+      params.component = combo[1].trim();
+
       fetchBugs(params)
         .success(function(data, status, headers, config) {
           //console.log('Success');
@@ -370,6 +371,15 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     //console.log("BUGZILLA URL", url);
     return $http.get(url);
   }
+
+  function makeCommentExtract(comment, max_length) {
+    max_length = max_length || 75;
+    if (comment.text.length > max_length) {
+      return comment.text.substring(0, max_length - 1) + '\u2026';
+    }
+    return comment.text;
+  }
+
 
   function fetchAndUpdateComments(bug, callback) {
     fetchComments(bug.id)
@@ -655,11 +665,9 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       localForage.setItem('email_to_name', $scope.email_to_name);
     }
     if (bug.unread) {
-      L('BUg was unread');
       $scope.counts_by_status.UNREAD--;
     }
     if (bug.is_changed) {
-      L("Bug was changed");
       $scope.counts_by_status.CHANGED--;
     }
     $scope.in_config = false; // just in case
@@ -1017,9 +1025,10 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   function precalculateProductCounts() {
     _.each($scope.products, function(product_combo) {
       var product, component;
-      if (product_combo.split('::').length === 2) {
-        product = product_combo.split('::')[0].trim();
-        component = product_combo.split('::')[1].trim();
+      if (product_combo.split('::').length >= 2) {
+        var combo = pySplit(product_combo, '::', 1);
+        product = combo[0].trim();
+        component = combo[1].trim();
       } else {
         product = product_combo.trim();
       }
@@ -1157,8 +1166,9 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       var params = {
          include_fields: _INCLUDE_FIELDS
       };
-      params.product = product_combo.split('::')[0].trim();
-      params.component = product_combo.split('::')[1].trim();
+      var combo = pySplit(product_combo, '::', 1);
+      params.product = combo[0].trim();
+      params.component = combo[1].trim();
       if (!products_creation_times[params.product]) {
         _products_left--;
         return;
@@ -1269,8 +1279,9 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       var params = {
          include_fields: _INCLUDE_FIELDS
       };
-      params.product = product_combo.split('::')[0].trim();
-      params.component = product_combo.split('::')[1].trim();
+      var combo = pySplit(product_combo, '::', 1);
+      params.product = combo[0].trim();
+      params.component = combo[1].trim();
       if (!last_change_times[params.product]) {
         _products_left--;
         return;
@@ -1967,7 +1978,9 @@ app.controller('ChartsController', ['$scope', function($scope) {
     if (grouping === 'simple') {
       status_keys = ['OPEN', 'CLOSED'];
     } else {
-      status_keys = _.filter(status_keys, function(k) { return any[k] });
+      status_keys = _.filter(status_keys, function(k) {
+        return any[k];
+      });
     }
     var values = _.map(status_keys, function(status) {
       var bucket = statuses[status];
@@ -1978,7 +1991,7 @@ app.controller('ChartsController', ['$scope', function($scope) {
       return {
         key: status,
         values: vs
-      }
+      };
     });
     return values;
   }
