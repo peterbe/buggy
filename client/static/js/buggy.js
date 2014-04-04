@@ -3,11 +3,6 @@
    setTimeout, showCloakDialog, closeCloakDialog, escapeRegExp, DEBUG */
 
 
-
-// saves typing
-var L = function() { console.log.apply(console, arguments); };
-var D = function() { console.dir.apply(console, arguments); };
-
 if (typeof DEBUG === 'undefined') DEBUG = false;
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
@@ -798,7 +793,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
 
   $interval(function() {
     if (!_inprogress_refreshing) {
-      L('Runing cleanLocalStorage()');
+      console.log('Runing cleanLocalStorage()');
       cleanLocalStorage();
     }
   }, CLEAN_LOCAL_STORAGE_FREQUENCY * 1000);
@@ -1248,10 +1243,10 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   function startFetchNewBugs() {
     new_bugs_interval = $interval(function() {
       if (!_inprogress_refreshing) {
-        //L("Fetch new bugs");
+        //console.log("Fetch new bugs");
         fetchNewBugs();
       } else {
-        L('NOT fetching new bugs (_inprogress_refreshing)');
+        console.log('NOT fetching new bugs (_inprogress_refreshing)');
       }
     }, FETCH_NEW_BUGS_FREQUENCY * 1000);
   }
@@ -1351,10 +1346,10 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   function startFetchNewChanges() {
     changed_bugs_interval = $interval(function() {
       if (!_inprogress_refreshing) {
-        //L("Fetch changed bugs");
+        //console.log("Fetch changed bugs");
         fetchNewChanges();
       } else {
-        L('NOT fetching new changes (_inprogress_refreshing)');
+        console.log('NOT fetching new changes (_inprogress_refreshing)');
       }
     }, FETCH_CHANGED_BUGS_FREQUENCY * 1000);
   }
@@ -1790,7 +1785,7 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
         var things_to_do = 0;
         if (post.status) things_to_do++;
         if (post.comment) things_to_do++;
-        //L('things_to_do', things_to_do);
+        //console.log('things_to_do', things_to_do);
 
         if (post.status) {
           params = {
