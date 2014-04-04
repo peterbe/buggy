@@ -1452,6 +1452,7 @@ app.controller('ListController',
   };
 
   $scope.highlightSearch = function(text) {
+    text = ('' + text).replace('<', '&lt;').replace('>', '&gt;');
     if (!$scope.search_q) {
       if (_.isNumber(text)) return '' + text;
       return text;

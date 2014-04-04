@@ -102,3 +102,5 @@ DONE
 * Changing product filters updates the charts immediately
 
 * Use grymt instead to make a dist
+
+* Upgrade to angular v1.2.16
