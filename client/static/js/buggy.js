@@ -402,6 +402,12 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
           localForage.setItem(bug.id, bug);
         } else {
           console.warn("No 'bugs' in data", data);
+          if (data.error && data.code === 102) {
+              // we tried to fetch a secure bug which we no longer have
+              // access to
+              console.warn('Forgetting bug ', bug.id);
+              forgetBug(bug.id);
+          }
         }
         if (callback) callback();
       }).error(function(data, status, headers, config) {
@@ -2034,7 +2040,7 @@ app.controller('ChartsController', ['$scope', function($scope) {
 function forgetBug(id) {
   localForage.removeItem(id, function() {
     localForage.getItem('bugs', function(v) {
-      v = _.filter(v, function(x) { return x != id; });
+      v = _.filter(v, function(x) { return x !== id; });
       localForage.setItem('bugs', v, function() {
         alert("removed " + id);
       });
