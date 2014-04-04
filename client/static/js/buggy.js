@@ -1646,10 +1646,12 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
   };
 
   $scope.gotoTop = function() {
-    if (elm = document.getElementById('top')) elm.scrollIntoView();
+    //if (elm = document.getElementById('top')) elm.scrollIntoView();
+    document.getElementById('top').scrollIntoView();
   };
   $scope.gotoBottom = function() {
-    if (elm = document.getElementById('bottom')) elm.scrollIntoView();
+    // if (elm = document.getElementById('bottom')) elm.scrollIntoView();
+    document.getElementById('bottom').scrollIntoView();
   };
 
   $scope.changeable_statuses = ['CONFIRMED', 'RESOLVED'];
