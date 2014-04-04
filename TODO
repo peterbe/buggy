@@ -100,3 +100,5 @@ DONE
   now instead of immediately putting them into $scope.products
 
 * Changing product filters updates the charts immediately
+
+* Use grymt instead to make a dist
