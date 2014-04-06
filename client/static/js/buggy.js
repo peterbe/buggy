@@ -1,7 +1,6 @@
 /* global _, localForage, Howl, console, get_gravatar, serializeObject, filesize, document,
    POP_SOUNDS, isAllDigits, window, angularForage, angular, alert, moment,
-   setTimeout, showCloakDialog, closeCloakDialog, escapeRegExp, DEBUG */
-
+   setTimeout, showCloakDialog, closeCloakDialog, escapeRegExp, DEBUG:true */
 
 if (typeof DEBUG === 'undefined') DEBUG = false;
 
@@ -315,37 +314,86 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
     });
   }
 
+  var fetch_soon_promise;
+  var fetch_soon_bugs = [];
+  function fetchAndUpdateBugsByIdSoon(bug, how_soon, how_many_max) {
+    how_soon = how_soon || 2;
+    how_many_max = how_many_max || 10;
+    fetch_soon_bugs.push(bug);
 
-  function fetchAndUpdateBug(bug, callback) {
-    var bug_id;
-    if (_.isNumber(bug)) {
-      bug_id = bug;
+    if (fetch_soon_bugs.length >= how_many_max) {
+      // can't wait, process these now
+      var copy = fetch_soon_bugs.slice(0);
+      fetch_soon_bugs = [];
+      fetchAndUpdateBugsById(copy, function () {
+        console.log("Have fetched and updated", copy);
+      });
     } else {
-      bug_id = bug.id;
+      // pile them onto a queue
+      if (fetch_soon_promise) {
+        $timeout.cancel(fetch_soon_promise);
+      }
+      fetch_soon_promise = $timeout(function() {
+        // maybe we want to empty fetch_soon_bugs *before* we're in the callback
+        // of fetchAndUpdateBugsById() ??
+        var copy = fetch_soon_bugs.slice(0);
+        fetch_soon_bugs = [];
+        fetchAndUpdateBugsById(copy, function () {
+          console.log("Have fetched and updated", copy);
+        });
+      }, how_soon * 1000);
+    }
+  }
+
+  function fetchAndUpdateBugsById(bugs, callback) {
+    var bug_ids = [];
+    if (_.isNumber(bugs)) {
+      // you used fetchAndUpdateBugsById(9876543)
+      bug_ids = [bugs];
+    } else if (_.isArray(bugs)) {
+      // you used fetchAndUpdateBugsById([9876543, {some object}])
+      _.each(bugs, function(bug) {
+        if (_.isNumber(bug)) {
+          bug_ids.push(bug);
+        } else {
+          bug_ids.push(bug.id);
+        }
+      });
+    } else {
+      // you used fetchAndUpdateBugsById({bug object})
+      bug_ids = [bugs.id];
     }
     fetchBugs({
-       id: bug_id,
+       id: bug_ids.join(','),
       include_fields: _INCLUDE_FIELDS + ',groups'
     }).success(function(data, status, headers, config) {
-      //console.log('Success');
+      // console.log('Success');
       $scope.is_offline = false;
       logDataDownloaded(data);
       //console.log("FETCHED BUG DATA", data);
-      if (data.bugs.length) {
-        var new_bug = data.bugs[0];
-        //console.log('NEW BUG', bug);
-        _.each($scope.bugs, function(old_bug, index) {
-          if (old_bug.id === new_bug.id) {
-            //console.log('Now found the bug');
-            new_bug.comments = old_bug.comments;
-            new_bug.extract = old_bug.extract;
-            new_bug.history = old_bug.history;
-            new_bug.unread = old_bug.unread;
-            $scope.bugs[index] = new_bug;
+      if (data.bugs && data.bugs.length) {
+        // console.log(data.bugs);
+        _.each(data.bugs, function(new_bug) {
+          // console.log('NEW BUG', new_bug);
+          var was_replaced = false;
+          _.each($scope.bugs, function(old_bug, index) {
+            if (old_bug.id === new_bug.id) {
+              was_replaced = true;
+              //console.log('Now found the bug');
+              new_bug.comments = old_bug.comments;
+              new_bug.extract = old_bug.extract;
+              new_bug.history = old_bug.history;
+              new_bug.unread = old_bug.unread;
+              $scope.bugs[index] = new_bug;
+            }
+          });
+          if (!was_replaced) {
+            $scope.bugs.push(new_bug);
           }
+          // update the local storage too
+          localForage.setItem(new_bug.id, new_bug);
         });
-        // update the local storage too
-        localForage.setItem(bug_id, new_bug);
+        reCountBugsByStatus($scope.bugs);
       }
       if (callback) callback();
     }).error(function(data, status, headers, config) {
@@ -532,7 +580,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
               $scope.bugs.push(bug);
             } else {
               console.warn('No bug data on', id);
-              fetchAndUpdateBug(id);
+              fetchAndUpdateBugsByIdSoon(id);
             }
             if (!_bugs_left) {
               // count how many bugs we have comments for
@@ -693,7 +741,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
         bug.things = $scope.getThings(bug);
         fetchAndUpdateHistory(bug, function() {
           bug.things = $scope.getThings(bug);
-          fetchAndUpdateBug(bug);
+          fetchAndUpdateBugsById(bug);
           fetchAndUpdateAttachments(bug, function() {
             bug.things = $scope.getThings(bug);
           });
@@ -828,7 +876,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
 
   $scope.refreshBug = function(bug) {
     startLoading('Refreshing bug and its comments');
-    fetchAndUpdateBug(bug, function() {
+    fetchAndUpdateBugsById(bug, function() {
       //console.log('Afterwards bug.status=', bug.status, ' $scope.bug.status=', $scope.bug.status);
       fetchAndUpdateComments(bug, function() {
         bug.things = $scope.getThings(bug);
