@@ -74,11 +74,17 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
                     <li><a href="#" ng-click="toggleConfig()">Config</a></li>
                     <li><a href="#" ng-click="toggleCharts()">Charts</a></li>
 
-		    <li><a href="#" ng-click="refreshBugs()" title="Ignore locally stored data and re-fetches from Bugzilla">Refresh List</a></li>
-		    <li><a href="#" ng-click="reDownloadSomeComments()" title="Impatiently downloads more bug comments in the background">Download More</a></li>
+		                <li><a href="#" ng-click="refreshBugs()" title="Ignore locally stored data and re-fetches from Bugzilla">Refresh List</a></li>
+		                <li><a href="#" ng-click="reDownloadSomeComments()" title="Impatiently downloads more bug comments in the background">Download More</a></li>
                     <li><a href="#" ng-click="toggleAbout()">About</a></li>
 
                 </ul>
+                <p class="bugzfeed-status">
+                  <img src="static/images/disconnected.gif" alt="Not connected to Bugzfeed" ng-if="!bugzfeed_connected">
+                  <img src="static/images/connected.gif" alt="Connected to Bugzfeed" ng-if="bugzfeed_connected">
+                  <span title="Not connected to Bugzfeed" ng-if="!bugzfeed_connected">Not connected</span>
+                  <span title="Connected to Bugzfeed version {{ bugzfeed_version }}" ng-if="bugzfeed_connected">Connected</span>
+                </p>
             </div>
 
         </div><!-- /nav-inner -->

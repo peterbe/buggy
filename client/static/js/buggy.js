@@ -5,6 +5,7 @@
 if (typeof DEBUG === 'undefined') DEBUG = false;
 
 var BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest/';
+var WEBSOCKET_URL = 'ws://bugzfeed.mozilla.org/';
 var MAX_BACKGROUND_DOWNLOADS = 10;
 var FETCH_NEW_BUGS_FREQUENCY = 3 * 60;
 var FETCH_CHANGED_BUGS_FREQUENCY = 3 * 60 + 1;
@@ -42,10 +43,179 @@ app.directive('keybinding', function () {
   };
 });
 
-BugsController.$inject = ['$scope', '$timeout', '$http', '$interval'];
+app.factory('bugzfeed', ['$rootScope', function($rootScope) {
+  var service = {};
 
-function BugsController($scope, $timeout, $http, $interval, $location) {
+  service.send_soon = [];
+  service.connected = false;
+
+  service.connect = function() {
+    if (service.ws) { return; }
+
+    var ws = new WebSocket(WEBSOCKET_URL);
+
+    ws.onopen = function() {
+      service.onOpen();
+      service.connected = true;
+      _.each(service.send_soon, function(message) {
+        service.send(message);
+      });
+      //service.callback("Succeeded to open a connection");
+    };
+
+    ws.onerror = function() {
+      service.onError();
+      // service.callback("Failed to open a connection");
+    };
+
+    ws.onclose = function() {
+      service.onClose();
+      connected = false;
+      // service.callback("Failed to open a connection");
+    };
+
+    ws.onmessage = function(message) {
+      // console.log('in bugzfeed.onmessage', message);
+      service.onMessage(message);
+      var data = message.data;
+      try {
+        data = JSON.parse(data);
+      } catch(exception) {
+        console.warn(data, 'is not a JSON string');
+      }
+      if (data.command) {
+        if (data.command === 'version') {
+          service.onVersion(data.version);
+        } else if (data.command === 'update') {
+          service.onUpdate(data.bug);
+        } else if (data.command === 'subscribe' || data.command === 'unsubscribe') {
+          service.onSubscription(data.bugs);
+        } else {
+          console.warn('Unrecognized command', data.command);
+        }
+      } else {
+        console.warn('No command', data);
+      }
+    };
+
+    service.ws = ws;
+  };
+
+  function _toBugIds(bugs) {
+    var bug_ids = [];
+    if (_.isNumber(bugs)) {
+      bug_ids.push(bugs);
+    } else if (_.isString(bugs)) {
+      bug_ids.push(parseInt(bugs));
+    } else if (_.isArray(bugs)) {
+      _.each(bugs, function(bug) {
+        if (_.isNumber(bug)) {
+          bug_ids.push(bug);
+        } else if (_.isString(bug)) {
+          bug_ids.push(parseInt(bug));
+        } else {
+          bug_ids.push(bug.id);
+        }
+      });
+    } else {
+      bug_ids = [bugs.id];
+    }
+    return bug_ids;
+  }
+
+  service.send = function(message) {
+    // console.log(message, service.connected);
+    if (service.connected) {
+      if (_.isObject(message)) {
+        message = JSON.stringify(message);
+      }
+      service.ws.send(message);
+    } else {
+      service.send_soon.push(message);
+    }
+  };
+
+  service.addSubscription = function(bugs) {
+    service.send({command: 'subscribe', bugs: _toBugIds(bugs)});
+  };
+
+  service.removeSubscription = function(bugs) {
+    service.send({command: 'unsubscribe', bugs: _toBugIds(bugs)});
+  };
+
+
+  // open for overriding
+  service.onVersion = function() {};
+  service.onMessage = function() {};
+  service.onUpdate = function() {};
+  service.onSubscription = function() {};
+
+  return service;
+}]);
+
+BugsController.$inject = ['$scope', '$timeout', '$http', '$interval', '$location', 'bugzfeed'];
+
+function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed) {
   'use strict';
+
+  $scope.bugzfeed_connected = false;
+  $scope.bugzfeed_version = null;
+
+  bugzfeed.connect();
+  bugzfeed.onOpen = function() {
+    console.log('onopen finished');
+    $scope.bugzfeed_connected = true;
+    //bugzfeed.send({command: 'version'});
+  };
+  bugzfeed.onClose = function() {
+    console.warn('bugzfeed connection closed');
+    $scope.bugzfeed_connected = false;
+  };
+  bugzfeed.onVersion = function(version) {
+    console.log('Bugzfeed Version is:', version);
+    $scope.bugzfeed_version = version;
+  };
+  bugzfeed.onSubscription = function(bugs) {
+    if (bugs.length < 10) {
+      console.log('Now subscribed to', bugs.join(', '));
+    } else {
+      console.log(
+        'Now subscribed to',
+        bugs.slice(0, 10).join(', '),
+        '... (and ' + (bugs.length - 10) + ' more)'
+      );
+    }
+    if (bugs.length > $scope.bugs.length) {
+      console.warn('Subscribed to ' + (bugs.length - $scope.bugs.length) + ' too many bugs');
+      var active_bug_ids = _.map($scope.bugs, function(bug) {
+        return bug.id;
+      });
+      var excess = _.filter(bugs, function(bug) {
+        return !_.contains(active_bug_ids, bug);
+      });
+      if (excess.length) {
+        console.warn('unsubscribing from ' + excess.length + ' excess bugs');
+        bugzfeed.removeSubscription(excess);
+      }
+    }
+
+  };
+  bugzfeed.onUpdate = function(bug_id) {
+    setGeneralNotice('1 bug updated.');
+
+    if ($scope.bug.id === bug_id) {
+      // $scope.bug.is_changed = true;
+      $scope.refreshBug($scope.bug);
+    }
+    _.each($scope.bugs, function(bug) {
+      if (bug.id === bug_id) {
+        bug.is_changed = true;
+        $scope.refreshBug(bug);
+      }
+    });
+  };
+
+  bugzfeed.send({command: 'version'});
 
   var _inprogress_refreshing = false;
 
@@ -143,6 +313,32 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       document.title = original_document_title;
     }, delay * 1000);
   }
+
+  // Bugzfeed.connect(
+  //   WEBSOCKET_URL,
+  //   on_connected,
+  //   on_disconnected,
+  //   on_update
+  // );
+  // function on_connected() {
+  //   console.log('on_connected');
+  //   $scope.bugzfeed_connected = true;
+  // }
+  // function on_disconnected() {
+  //   console.log('on_disconnected');
+  //   $scope.bugzfeed_connected = false;
+  // }
+  // // $scope.needs_update = [];
+  // function on_update(bug_id) {
+  //   console.log("UPDATE TO ", bug_id);
+  //   // $scope.needs_update.push(bug_id);
+  //   $scope.fetch_soon_bugs.push(bug_id);
+  //   $scope.$apply();
+  //   fetchAndUpdateBugsByIdSoon();
+  //   // $scope.$apply();
+  //   // needs_
+  //   // $scope.$apply();
+  // }
 
   $scope.filterByStatus = function(status) {
     if (status === 'ALL') {
@@ -298,6 +494,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
                 console.log("Storing a list of ", bug_ids.length, "bugs");
                 localForage.setItem('bugs', bug_ids);
                 reCountBugsByStatus($scope.bugs);
+                bugzfeed.addSubscription($scope.bugs);
                 $scope.$apply();
                 if (callback) {
                   $scope.$apply(callback);
@@ -315,18 +512,21 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   }
 
   var fetch_soon_promise;
-  var fetch_soon_bugs = [];
+  $scope.fetch_soon_bugs = [];
   function fetchAndUpdateBugsByIdSoon(bug, how_soon, how_many_max) {
     how_soon = how_soon || 2;
     how_many_max = how_many_max || 10;
-    fetch_soon_bugs.push(bug);
+    if (bug) {
+      $scope.fetch_soon_bugs.push(bug);
+    }
 
-    if (fetch_soon_bugs.length >= how_many_max) {
+    if ($scope.fetch_soon_bugs.length >= how_many_max) {
       // can't wait, process these now
-      var copy = fetch_soon_bugs.slice(0);
-      fetch_soon_bugs = [];
+      var copy = $scope.fetch_soon_bugs.slice(0);
+      $scope.fetch_soon_bugs = [];
       fetchAndUpdateBugsById(copy, function () {
         console.log("Have fetched and updated", copy);
+        // need to fetch and update comments too
       });
     } else {
       // pile them onto a queue
@@ -334,12 +534,13 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
         $timeout.cancel(fetch_soon_promise);
       }
       fetch_soon_promise = $timeout(function() {
-        // maybe we want to empty fetch_soon_bugs *before* we're in the callback
+        // maybe we want to empty $scope.fetch_soon_bugs *before* we're in the callback
         // of fetchAndUpdateBugsById() ??
-        var copy = fetch_soon_bugs.slice(0);
-        fetch_soon_bugs = [];
+        var copy = $scope.fetch_soon_bugs.slice(0);
+        $scope.fetch_soon_bugs = [];
         fetchAndUpdateBugsById(copy, function () {
           console.log("Have fetched and updated", copy);
+          // need to fetch and update comments too
         });
       }, how_soon * 1000);
     }
@@ -364,7 +565,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       bug_ids = [bugs.id];
     }
     fetchBugs({
-       id: bug_ids.join(','),
+      id: bug_ids.join(','),
       include_fields: _INCLUDE_FIELDS + ',groups'
     }).success(function(data, status, headers, config) {
       // console.log('Success');
@@ -591,6 +792,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
               $scope.$apply();
               // start pulling down comments pre-emptively
               console.log('Done loading bugs. Start downloading some comments.');
+              bugzfeed.addSubscription($scope.bugs);
               downloadSomeComments();
               if (callback) callback();
             }
@@ -609,6 +811,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
             reCountBugsByStatus($scope.bugs);
             $scope.$apply();
             // start pulling down comments pre-emptively
+            bugzfeed.addSubscription($scope.bugs);
             downloadSomeComments();
             if (callback) callback();
           });
@@ -1252,6 +1455,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
               new_bug_ids.push(bug.id);
             }
             localForage.setItem(bug.id, bug);
+            bugzfeed.addSubscription(bug);
             fetchAndUpdateComments(bug);
           });
           if (!_products_left) {
@@ -1345,6 +1549,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
       var changed_bug_ids = [];
       fetchBugs(params)
         .success(function(data, status, headers, config) {
+
           //console.log('Success');
           $scope.is_offline = false;
           logDataDownloaded(data);
@@ -1393,7 +1598,7 @@ function BugsController($scope, $timeout, $http, $interval, $location) {
   var changed_bugs_interval;
   function startFetchNewChanges() {
     changed_bugs_interval = $interval(function() {
-      if (!_inprogress_refreshing) {
+      if (!_inprogress_refreshing && !$scope.bugzfeed_connected) {
         //console.log("Fetch changed bugs");
         fetchNewChanges();
       } else {

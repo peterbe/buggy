@@ -382,3 +382,10 @@ body, .post-comment { background-color: #efefef; }
 .chart .pure-form label {
     display: inline;
 }
+
+
+.bugzfeed-status {
+  color: #fff;
+  font-size: 80%;
+  padding: 20px;
+}

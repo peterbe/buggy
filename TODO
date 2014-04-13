@@ -106,3 +106,6 @@ DONE
 * Upgrade to angular v1.2.16
 
 * Issue 6 - prevent potential flood of individual bug fetches
+
+* Integration with Bugzfeed
+  http://mrcote.info/blog/2014/04/04/bugzfeed-bugzilla-push-notifications/
