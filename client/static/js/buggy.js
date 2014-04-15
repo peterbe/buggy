@@ -63,8 +63,8 @@ app.factory('bugzfeed', ['$rootScope', function($rootScope) {
       //service.callback("Succeeded to open a connection");
     };
 
-    ws.onerror = function() {
-      service.onError();
+    ws.onerror = function(event) {
+      service.onError(event);
       // service.callback("Failed to open a connection");
     };
 
@@ -149,6 +149,9 @@ app.factory('bugzfeed', ['$rootScope', function($rootScope) {
   service.onMessage = function() {};
   service.onUpdate = function() {};
   service.onSubscription = function() {};
+  service.onError = function(event) {
+    console.error('Error on websocket', event);
+  };
 
   return service;
 }]);
