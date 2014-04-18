@@ -291,7 +291,8 @@ table.history td {
 
 
 #list-items .padlock {
-    float: right;
+    float: left;
+    margin-right: 2px;
 }
 
 
@@ -388,4 +389,13 @@ body, .post-comment { background-color: #efefef; }
   color: #fff;
   font-size: 80%;
   padding: 20px;
+}
+
+.email-desc .email-avatar {
+    float: right;
+    margin-left: 3px;
+}
+
+.email-item {
+    padding: 1em 0.6em;
 }

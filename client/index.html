@@ -126,23 +126,26 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
              id="b{{ bug.id }}">
 
             <div class="pure-u">
-                <img class="email-avatar" alt="Avatar" height="32" width="32" ng-if="isEmail(bug.creator)" ng-src="{{ avatarURL(bug.creator) }}">
+                <img class="email-avatar" alt="Avatar" title="Person who filed the bug" height="32" width="32" ng-if="isEmail(bug.creator)" ng-src="{{ avatarURL(bug.creator) }}">
                 <br><br>
-		            <span style="margin-left:10px" class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</span>
+		        <span style="margin-left:10px" class="badge badge-small" ng-if="hasAdditionalComments(bug)" title="Number of comments">{{ countAdditionalComments(bug) }}</span>
             </div>
 
             <div class="pure-u-5-6">
                 <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
                 <h4 class="email-subject">
+                  <img class="padlock" src="static/images/padlock.png" ng-if="bug.groups" alt="Padlock" title="Only visible to people in {{ bug.groups.join(', ') }}">
                   <a href="{{ makeBugzillaLink(bug.id) }}" target="_blank" ng-bind-html="highlightSearch(bug.id)"></a>
                   <span ng-bind-html="highlightSearch(bug.summary)"></span>
                 </h4>
+
                 <p class="email-desc">
-                  {{ bug.extract }}
-                  <br>
-                  <img class="padlock" src="static/images/padlock.gif" ng-if="bug.groups" alt="Padlock" title="Only visible to people in {{ bug.groups.join(', ') }}">
-                  <span class="badge badge-small badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
-                  <span class="badge badge-small" ng-if="bug.resolution">{{ bug.resolution }}</span>
+                    <img class="email-avatar" alt="Avatar" title="Last person to comment" height="32" width="32" ng-if="bug.last_actor" ng-src="{{ avatarURL(bug.last_actor) }}">
+                    {{ bug.extract }}
+                    <br>
+
+                    <span class="badge badge-small badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
+                    <span class="badge badge-small" ng-if="bug.resolution">{{ bug.resolution }}</span>
                 </p>
             </div>
           </div><!-- /email-item -->

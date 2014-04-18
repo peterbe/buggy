@@ -166,7 +166,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
 
   bugzfeed.connect();
   bugzfeed.onOpen = function() {
-    console.log('onopen finished');
+    // console.log('onopen finished');
     $scope.bugzfeed_connected = true;
     //bugzfeed.send({command: 'version'});
   };
@@ -175,7 +175,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
     $scope.bugzfeed_connected = false;
   };
   bugzfeed.onVersion = function(version) {
-    console.log('Bugzfeed Version is:', version);
+    // console.log('Bugzfeed Version is:', version);
     $scope.bugzfeed_version = version;
   };
   bugzfeed.onSubscription = function(bugs) {
@@ -317,32 +317,6 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
     }, delay * 1000);
   }
 
-  // Bugzfeed.connect(
-  //   WEBSOCKET_URL,
-  //   on_connected,
-  //   on_disconnected,
-  //   on_update
-  // );
-  // function on_connected() {
-  //   console.log('on_connected');
-  //   $scope.bugzfeed_connected = true;
-  // }
-  // function on_disconnected() {
-  //   console.log('on_disconnected');
-  //   $scope.bugzfeed_connected = false;
-  // }
-  // // $scope.needs_update = [];
-  // function on_update(bug_id) {
-  //   console.log("UPDATE TO ", bug_id);
-  //   // $scope.needs_update.push(bug_id);
-  //   $scope.fetch_soon_bugs.push(bug_id);
-  //   $scope.$apply();
-  //   fetchAndUpdateBugsByIdSoon();
-  //   // $scope.$apply();
-  //   // needs_
-  //   // $scope.$apply();
-  // }
-
   $scope.filterByStatus = function(status) {
     if (status === 'ALL') {
       $scope.selected_statuses = [];
@@ -381,8 +355,6 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
       }
       $scope.counts_by_status[bug.status] = 1 + ($scope.counts_by_status[bug.status] || 0);
     });
-    //console.log('BUGS ARE A CHANGING');
-    //console.log($scope.counts_by_status);
   }
 
 
@@ -489,6 +461,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
                 // we already have it, merge!
                 bug.comments = existing_bug.comments;
                 bug.extract = existing_bug.extract;
+                bug.last_actor = existing_bug.last_actor;
               }
               localForage.setItem(bug.id, bug);
               $scope.bugs.push(bug);
@@ -586,6 +559,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
               //console.log('Now found the bug');
               new_bug.comments = old_bug.comments;
               new_bug.extract = old_bug.extract;
+              new_bug.last_actor = old_bug.last_actor;
               new_bug.history = old_bug.history;
               new_bug.unread = old_bug.unread;
               $scope.bugs[index] = new_bug;
@@ -638,6 +612,9 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
           bug.comments = data.bugs[bug.id].comments;
           if (bug.comments.length) {
             bug.extract = makeCommentExtract(_.last(bug.comments));
+            if (bug.comments.length > 1) {
+                bug.last_actor = _.last(bug.comments).creator;
+            }
           }
           // we also need to update $scope.bugs where a copy of this bug exists
           _.each($scope.bugs, function(list_bug, index) {
@@ -1449,6 +1426,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
             if (existing_bug) {
               bug.comments = existing_bug.comments;
               bug.extract = existing_bug.extract;
+              bug.last_actor = existing_bug.last_actor;
               bug.history = existing_bug.history;
             } else {
               //console.log('NEW BUG'); console.dir(bug);
@@ -1564,6 +1542,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
               changed_bug_ids.push(bug.id);
               bug.comments = existing_bug.comments;
               bug.extract = existing_bug.extract;
+              bug.last_actor = existing_bug.last_actor;
               bug.history = existing_bug.history;
               bug.unread = existing_bug.unread;
               bug.is_changed = true;

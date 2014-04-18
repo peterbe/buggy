@@ -109,3 +109,5 @@ DONE
 
 * Integration with Bugzfeed
   http://mrcote.info/blog/2014/04/04/bugzfeed-bugzilla-push-notifications/
+
+* In the list show the gravatar of the last person to comment too.
