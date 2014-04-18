@@ -1,6 +1,8 @@
 TODO
 ====
 
+* Reconnect disconnected websocket
+
 * Add ability to "Star" bugs
 
 * Support ngAnimate
