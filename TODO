@@ -1,8 +1,6 @@
 TODO
 ====
 
-* Reconnect disconnected websocket
-
 * Add ability to "Star" bugs
 
 * Support ngAnimate
@@ -113,3 +111,5 @@ DONE
   http://mrcote.info/blog/2014/04/04/bugzfeed-bugzilla-push-notifications/
 
 * In the list show the gravatar of the last person to comment too.
+
+* Reconnect disconnected websocket

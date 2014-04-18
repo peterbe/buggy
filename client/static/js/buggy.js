@@ -49,6 +49,18 @@ app.factory('bugzfeed', ['$rootScope', function($rootScope) {
   service.send_soon = [];
   service.connected = false;
 
+  service.reconnect = function() {
+      if (service.ws.readyState !== service.ws.OPEN) {
+        service.ws.close();
+        delete service.ws;
+      }
+      setTimeout(function() {
+        $rootScope.$apply(function() {
+          service.connect();
+        });
+      }, 100);
+  };
+
   service.connect = function() {
     if (service.ws) { return; }
 
@@ -60,18 +72,15 @@ app.factory('bugzfeed', ['$rootScope', function($rootScope) {
       _.each(service.send_soon, function(message) {
         service.send(message);
       });
-      //service.callback("Succeeded to open a connection");
     };
 
     ws.onerror = function(event) {
       service.onError(event);
-      // service.callback("Failed to open a connection");
     };
 
     ws.onclose = function() {
       service.onClose();
-      connected = false;
-      // service.callback("Failed to open a connection");
+      service.connected = false;
     };
 
     ws.onmessage = function(message) {
@@ -147,6 +156,7 @@ app.factory('bugzfeed', ['$rootScope', function($rootScope) {
   // open for overriding
   service.onVersion = function() {};
   service.onMessage = function() {};
+  service.onClose = function() {};
   service.onUpdate = function() {};
   service.onSubscription = function() {};
   service.onError = function(event) {
@@ -166,12 +176,12 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
 
   bugzfeed.connect();
   bugzfeed.onOpen = function() {
-    // console.log('onopen finished');
+    console.log('onopen finished');
     $scope.bugzfeed_connected = true;
     //bugzfeed.send({command: 'version'});
   };
   bugzfeed.onClose = function() {
-    console.warn('bugzfeed connection closed');
+    console.warn('bugzfeed connection closed', arguments);
     $scope.bugzfeed_connected = false;
   };
   bugzfeed.onVersion = function(version) {
@@ -201,7 +211,6 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
         bugzfeed.removeSubscription(excess);
       }
     }
-
   };
   bugzfeed.onUpdate = function(bug_id) {
     setGeneralNotice('1 bug updated.');
@@ -220,6 +229,19 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
 
   bugzfeed.send({command: 'version'});
 
+  $scope.$watch('is_offline', function(value) {
+    if (value === null) return; // things haven't started yet
+    if (value) {
+      // that's terrible!
+      $scope.bugzfeed_connected = false;
+      bugzfeed.disconnect();
+    } else {
+      if (!bugzfeed.connected) {
+        bugzfeed.reconnect();
+      }
+    }
+  });
+
   var _inprogress_refreshing = false;
 
   $scope.bugs = [];
@@ -228,7 +250,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
   $scope.in_charts = false;
   $scope.email = '';
   $scope.auth_token = null;
-  $scope.is_offline = false;
+  $scope.is_offline = null;
   $scope.all_possible_statuses = _ALL_POSSIBLE_STATUSES;
   $scope.selected_statuses = [];
   angularForage.getItem($scope, 'selected_statuses', function(value) {
@@ -1580,8 +1602,8 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
   var changed_bugs_interval;
   function startFetchNewChanges() {
     changed_bugs_interval = $interval(function() {
-      if (!_inprogress_refreshing && !$scope.bugzfeed_connected) {
-        //console.log("Fetch changed bugs");
+      if ((!_inprogress_refreshing && !$scope.bugzfeed_connected) || $scope.is_offline) {
+        // console.log("Fetch changed bugs");
         fetchNewChanges();
       } else {
         console.log('NOT fetching new changes (_inprogress_refreshing)');
