@@ -14,6 +14,7 @@ if (DEBUG) {
   FETCH_CHANGED_BUGS_FREQUENCY *= 5;
   console.warn("NB! In DEBUG mode");
 }
+var BUGZFEED_RECONNECT_FREQUENCY = 60;
 var CLEAN_LOCAL_STORAGE_FREQUENCY = 120;
 var CLEAR_POST_QUEUE_FREQUENCY = 10;
 
@@ -241,6 +242,13 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
       }
     }
   });
+
+  $interval(function() {
+    if (!bugzfeed.connected) {
+      console.warn('Was not connected to bugzfeed. Trying to reconnect...');
+      bugzfeed.reconnect();
+    }
+  }, BUGZFEED_RECONNECT_FREQUENCY * 1000);
 
   var _inprogress_refreshing = false;
 
