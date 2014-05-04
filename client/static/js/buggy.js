@@ -45,12 +45,26 @@ app.directive('keybinding', function () {
 });
 
 app.factory('bugzfeed', ['$rootScope', function($rootScope) {
+  /*
+   * About the readyState outputs
+   * 3 == CLOSED
+   * 2 == CLOSING
+   * 0 == CONNECTING
+   * 1 == OPEN
+   */
+
   var service = {};
 
   service.send_soon = [];
   service.connected = false;
 
+  service.disconnect = function() {
+    service.ws.close();
+    service.connected = false;
+  };
+
   service.reconnect = function() {
+    console.log('trying to reconnect', service.ws.readyState);
       if (service.ws.readyState !== service.ws.OPEN) {
         service.ws.close();
         delete service.ws;
@@ -237,6 +251,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
       $scope.bugzfeed_connected = false;
       bugzfeed.disconnect();
     } else {
+      // back online supposedly
       if (!bugzfeed.connected) {
         bugzfeed.reconnect();
       }
