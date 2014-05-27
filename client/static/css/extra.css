@@ -30,7 +30,10 @@
     font-family: sans-serif;
     font-size: 0.9em;
 }
-.email-content-body p {
+.email-content-body p,
+.email-content-body li,
+.email-content-body dt,
+.email-content-body dd {
     font-size: 0.9em;
 }
 
@@ -398,4 +401,8 @@ body, .post-comment { background-color: #efefef; }
 
 .email-item {
     padding: 1em 0.6em;
+}
+
+a.external:after {
+     content: " " url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=);
 }

@@ -311,6 +311,15 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
     }
   });
 
+  // These are the extra include fields to download when updating
+  // an individual bug.
+  $scope.extra_include_fields = ['groups', 'blocks', 'depends_on'];  // default
+  angularForage.getItem($scope, 'extra_include_fields', function(value) {
+    if (value !== null) {
+      $scope.extra_include_fields = value;
+    }
+  });
+
   $scope.config_stats = {
      data_downloaded_human: '',
      total_data_downloaded_human: '',
@@ -586,9 +595,14 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
       // you used fetchAndUpdateBugsById({bug object})
       bug_ids = [bugs.id];
     }
+
+    var include_fields = _INCLUDE_FIELDS;
+    if ($scope.extra_include_fields) {
+      include_fields += ',' + $scope.extra_include_fields.join(',');
+    }
     fetchBugs({
       id: bug_ids.join(','),
-      include_fields: _INCLUDE_FIELDS + ',groups'
+      include_fields: include_fields
     }).success(function(data, status, headers, config) {
       // console.log('Success');
       $scope.is_offline = false;
@@ -1938,6 +1952,19 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
     document.getElementById('bottom').scrollIntoView();
   };
 
+  $scope.openBugMaybe = function(id) {
+    var found = false;
+    _.each($scope.bugs, function(bug) {
+      if (bug.id === id) {
+        found = true;
+        $scope.selectBug(bug);
+      }
+    });
+    if (!found) {
+      window.open($scope.makeBugzillaLink(id));
+    }
+  };
+
   $scope.changeable_statuses = ['CONFIRMED', 'RESOLVED'];
   $scope.changeable_resolutions = [];
   $scope.$watch('bug', function(bug) {
@@ -2194,6 +2221,33 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
 
 
 app.controller('ConfigController', ['$scope', function($scope) {
+
+  $scope.possible_extra_include_fields = [
+    ['groups', 'Is confidential?'],
+    ['depends_on', 'Depends on'],
+    ['blocks', 'Blocks'],
+    ['priority', 'Priority'],
+    ['severity', 'Severity'],
+    ['target_milestone', 'Target milestone'],
+    ['url', 'URL'],
+  ];
+
+  $scope.chosenExtraIncludeField = function(field) {
+    return _.contains($scope.extra_include_fields, field);
+  };
+
+  $scope.toggleExtraIncludeField = function(field) {
+    if (_.contains($scope.extra_include_fields, field)) {
+      // remove it
+      $scope.extra_include_fields = _.filter($scope.extra_include_fields, function(f) {
+        return f !== field;
+      });
+    } else {
+      // add it
+      $scope.extra_include_fields.push(field);
+    }
+    localForage.setItem('extra_include_fields', $scope.extra_include_fields);
+  };
 
   $scope.clearAuthToken = function() {
     $scope.auth_token = null;

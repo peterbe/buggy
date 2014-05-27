@@ -263,7 +263,7 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
         <div ng-if="in_config" ng-controller="ConfigController">
             <div class="email-content-header pure-g">
                 <div class="pure-u-2-3">
-                    <h1 class="email-content-title">Configuration Options</h1>
+                    <h2 class="email-content-title">Configuration Options</h2>
                 </div>
                 <div class="pure-u-1-3">
                     <p style="text-align: right"><a href="#" ng-click="toggleConfig()">Close</a></p>
@@ -271,7 +271,7 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
             </div>
             <div class="email-content-body">
 
-              <h2>Products &amp; Components</h2>
+              <h3>Products &amp; Components</h3>
               <table class="pure-table">
                 <thead>
                   <tr>
@@ -350,10 +350,21 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
                 <b ng-if="!play_sounds">Off</b>
                 <a href="" ng-click="togglePlaySounds()">Toggle</a>
               </p>
+              <p>
+                Extra include fields:
+              </p>
+              <ul>
+                <li ng-repeat="f in possible_extra_include_fields">
+                  {{ f[1] }}
+                  <b ng-if="chosenExtraIncludeField(f[0])">On</b>
+                  <b ng-if="!chosenExtraIncludeField(f[0])">Off</b>
+                  <a href="" ng-click="toggleExtraIncludeField(f[0])">Toggle</a>
+                </li>
+              </ul>
             </div><!-- / toggle sounds -->
 
             <div class="email-content-body">
-              <h2>In Memory</h2>
+              <h3>In Memory</h3>
               <dl>
                 <dt># Bugs in scope</dt>
                 <dd>{{ config_stats.total_bugs | number:0 }}</dd>
@@ -367,7 +378,7 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
             </div>
 
             <div class="email-content-body">
-              <h2>Debug Tools</h2>
+              <h3>Debug Tools</h3>
               <form ng-submit="cleanLocalStorage()">
                 <p>
                   <button class="pure-button pure-button-primary">Clean Local Storage</button>
@@ -385,7 +396,7 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
         <div class="email-content" ng-if="bug.empty && !in_config && !in_about && !in_charts">
           <div class="email-content-header pure-g">
             <div class="pure-u-1-2">
-              <h1 class="email-content-title">Nothing selected</h1>
+              <h2 class="email-content-title">Nothing selected</h2>
             </div>
           </div>
 
@@ -410,7 +421,7 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
 	      </div>
 	      <div class="sticky-summary" ng-class="{hidden: !show_sticky}">
   	      <h5>
-              <a href="{{ makeBugzillaLink(bug.id) }}" target="_blank">{{ bug.id }}</a>
+              <a href="{{ makeBugzillaLink(bug.id) }}" target="_blank" class="external">{{ bug.id }}</a>
               <span class="email-name">{{ bug.product }} :: {{ bug.component }}</span>
               <span class="badge badge-small badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
               <span class="badge badge-small" ng-if="bug.resolution">{{ bug.resolution }}</span>
@@ -424,20 +435,20 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
                     <h5 class="email-name">{{ bug.product }} :: {{ bug.component }}</h5>
                     <h2 class="email-content-title">{{ bug.summary }}</h2>
                     <p class="external-url">
-                      <a href="{{ makeBugzillaLink(bug.id) }}"
+                      <a href="{{ makeBugzillaLink(bug.id) }}" class="external"
                          target="_blank">
                         {{ makeBugzillaLink(bug.id) }}
                       </a>
                     </p>
                 </div>
                 <div class="pure-u-1-3 email-content-controls">
-            		  <p>
+                  <p>
                     <img src="static/images/padlock.png" ng-if="bug.groups" alt="Padlock" title="Only visible to people in {{ bug.groups.join(', ') }}">
                     <span class="badge badge-{{ bug.status }}" ng-if="bug.status">{{ bug.status }}</span>
                     <span class="badge badge" ng-if="bug.resolution">{{ bug.resolution }}</span>
-            		  </p>
-		              <button class="pure-button secondary-button" ng-click="refreshBug(bug)"
-        		      >Refresh Bug</button>
+                  </p>
+                  <button class="pure-button secondary-button" ng-click="refreshBug(bug)"
+                  >Refresh Bug</button>
                 </div>
 
                 <div class="pure-u" ng-if="bug.creator_detail.email">
@@ -447,10 +458,35 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
                   <p class="email-content-subtitle">
                         By <b>{{ bug.creator_detail.real_name || bug.creator_detail.email }}</b> at
                         <span>{{ bug.creation_time }}</span><br>
-			                   last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
+                        Last changed <span>{{ displayTimeAgo(bug.last_change_time) }}</span>
                   </p>
+
                   <p class="email-content-subtitle" ng-if="isAssignedTo(bug)">
-                        Assigned to <b>{{ bug.assigned_to_detail.real_name ||bug.assigned_to_detail.email }}</b>
+                    Assigned to <b>{{ bug.assigned_to_detail.real_name ||bug.assigned_to_detail.email }}</b>
+                  </p>
+                  <p class="email-content-subtitle" ng-if="bug.priority">
+                    Priority <b>{{ bug.priority }}</b>
+                  </p>
+                  <p class="email-content-subtitle" ng-if="bug.severity">
+                    Severity <b>{{ bug.severity }}</b>
+                  </p>
+                  <p class="email-content-subtitle" ng-if="bug.target_milestone">
+                    Target milestone <b>{{ bug.target_milestone }}</b>
+                  </p>
+                  <p class="email-content-subtitle" ng-if="bug.url">
+                    URL <a href="{{ bug.url }}" target="_blank">{{ bug.url }}</a>
+                  </p>
+                  <p class="email-content-subtitle" ng-if="bug.depends_on">
+                    Depends on
+                    <span ng-repeat="bugid in bug.depends_on">
+                      <a href="#" ng-click="openBugMaybe(bugid)">{{ bugid }}</a><span ng-show="!$last">, </span>
+                    </span>
+                  </p>
+                  <p class="email-content-subtitle" ng-if="bug.blocks_on">
+                    Blocks
+                    <span ng-repeat="bugid in bug.blocks">
+                      <a href="{{ makeBugzillaLink(bugid) }}">{{ bugid }}</a><span ng-show="!$last">, </span>
+                    </span>
                   </p>
                 </div>
 
