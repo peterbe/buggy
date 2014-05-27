@@ -102,6 +102,7 @@ app.factory('bugzfeed', ['$rootScope', function($rootScope) {
       // console.log('in bugzfeed.onmessage', message);
       service.onMessage(message);
       var data = message.data;
+      // console.log('onmessage', data);
       try {
         data = JSON.parse(data);
       } catch(exception) {
@@ -592,11 +593,10 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
       // console.log('Success');
       $scope.is_offline = false;
       logDataDownloaded(data);
-      //console.log("FETCHED BUG DATA", data);
+      // console.log("FETCHED BUG DATA", data);
       if (data.bugs && data.bugs.length) {
         // console.log(data.bugs);
         _.each(data.bugs, function(new_bug) {
-          // console.log('NEW BUG', new_bug);
           var was_replaced = false;
           _.each($scope.bugs, function(old_bug, index) {
             if (old_bug.id === new_bug.id) {
@@ -608,6 +608,10 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
               new_bug.history = old_bug.history;
               new_bug.unread = old_bug.unread;
               $scope.bugs[index] = new_bug;
+              if (new_bug.id === $scope.bug.id) {
+                $scope.bug = new_bug;
+                $scope.bug.things = $scope.getThings($scope.bug);
+              }
             }
           });
           if (!was_replaced) {
@@ -1105,7 +1109,7 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
   $scope.refreshBug = function(bug) {
     startLoading('Refreshing bug and its comments');
     fetchAndUpdateBugsById(bug, function() {
-      //console.log('Afterwards bug.status=', bug.status, ' $scope.bug.status=', $scope.bug.status);
+      // console.log('Afterwards bug.status=', bug.status, ' $scope.bug.status=', $scope.bug.status);
       fetchAndUpdateComments(bug, function() {
         bug.things = $scope.getThings(bug);
         fetchAndUpdateHistory(bug, function() {
