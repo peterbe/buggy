@@ -482,7 +482,7 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
                       <a href="#" ng-click="openBugMaybe(bugid)">{{ bugid }}</a><span ng-show="!$last">, </span>
                     </span>
                   </p>
-                  <p class="email-content-subtitle" ng-if="bug.blocks_on">
+                  <p class="email-content-subtitle" ng-if="bug.blocks">
                     Blocks
                     <span ng-repeat="bugid in bug.blocks">
                       <a href="{{ makeBugzillaLink(bugid) }}">{{ bugid }}</a><span ng-show="!$last">, </span>
