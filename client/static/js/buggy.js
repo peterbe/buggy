@@ -667,6 +667,18 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
   function fetchAndUpdateComments(bug, callback) {
     fetchComments(bug.id)
       .success(function(data, status, headers, config) {
+        if (data.error) {
+          if (data.code === 32000) {
+            // oh noes! the client token isn't valid any more
+            if ($scope.auth_token) {
+              $scope.auth_token = null;
+              alert('Your token has expired. You have to sign in again.');
+              localForage.removeItem('auth_token');
+              if (callback) callback();
+              return;
+            }
+          }
+        }
         //console.log('Comments Success');
         $scope.is_offline = false;
         logDataDownloaded(data);
