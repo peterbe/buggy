@@ -338,6 +338,9 @@ https://github.com/peterbe/buggy/compare/$git_revision_short...master
               <input type="password" ng-model="password" placeholder="Password">
               <button type="submit" class="pure-button pure-button-primary">Sign in</button>
             </form>
+            <p ng-if="auth_failed" style="color:darkred">
+              <b>{{ auth_failed }}</b>
+            </p>
             <p ng-if="auth_token">
               You have successfully signed in. <a href="#" ng-click="clearAuthToken()">Sign out</a>
             </p>

@@ -1410,7 +1410,13 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
         console.warn('Failure to fetchAuthToken');
         if (status === 0) $scope.is_offline = true;
         //console.dir(data);
-        console.log('status', status);
+        console.warn('status', status);
+        console.warn('data', data);
+        if (status === 401) {
+          setErrorNotice("Unable to log in. (Invalid credentials)");
+        } else {
+          setErrorNotice("Unable to log in. (status " + status + ")");
+        }
       });
   };
 
