@@ -182,8 +182,7 @@ app.factory('bugzfeed', ['$rootScope', function($rootScope) {
   return service;
 }]);
 
-BugsController.$inject = ['$scope', '$timeout', '$http', '$interval', '$location', 'bugzfeed'];
-
+app.controller('BugsController', ['$scope', '$timeout', '$http', '$interval', '$location', 'bugzfeed',
 function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed) {
   'use strict';
 
@@ -1572,7 +1571,6 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
   }
   startFetchNewBugs();
 
-
   function getProductsLatestChangeTimes() {
     var p = {};
     _.each($scope.bugs, function(bug) {
@@ -1698,15 +1696,14 @@ function BugsController($scope, $timeout, $http, $interval, $location, bugzfeed)
     localForage.setItem('product_filters', $scope.product_filters);
   };
 
-}
+}]);
 
 
 /* ListController
  * For the middle pane where you scroll and search bugs.
  */
-app.controller('ListController',
-               ['$scope', '$timeout', '$location', '$anchorScroll',
-                function($scope, $timeout, $location, $anchorScroll) {
+app.controller('ListController', ['$scope', '$timeout', '$location', '$anchorScroll',
+function($scope, $timeout, $location, $anchorScroll) {
   $scope.search_q_primary = '';  // the model used for dumping to search_q
   $scope.search_q = '';  // the variable used for filtering
   $scope.in_search = false;
@@ -1908,7 +1905,6 @@ app.controller('ListController',
 }]);
 
 
-
 app.directive("scrolling", function () {
   return function(scope, element, attrs) {
     var raw = element[0];
@@ -1957,7 +1953,8 @@ app.directive("scrolling", function () {
   };
 });
 
-app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', function($scope, $interval, $http, $timeout) {
+app.controller('BugController', ['$scope', '$interval', '$http', '$timeout',
+function($scope, $interval, $http, $timeout) {
 
   $scope.at_top = true;
   $scope.at_bottom = false;
@@ -2244,7 +2241,8 @@ app.controller('BugController', ['$scope', '$interval', '$http', '$timeout', fun
 }]);
 
 
-app.controller('ConfigController', ['$scope', function($scope) {
+app.controller('ConfigController', ['$scope',
+function($scope) {
 
   $scope.possible_extra_include_fields = [
     ['groups', 'Is confidential?'],
@@ -2311,7 +2309,8 @@ app.controller('ConfigController', ['$scope', function($scope) {
 }]);  // end ConfigController
 
 
-app.controller('ChartsController', ['$scope', function($scope) {
+app.controller('ChartsController', ['$scope',
+function($scope) {
 
   function getChartData() {
     var statuses = {};
